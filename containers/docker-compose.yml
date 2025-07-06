@@ -1,0 +1,43 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: sboanalytics_web
+    ports:
+      - "23443:443"     # Host port 23443 -> Container port 443 (HTTPS)
+    volumes:
+      - ../webapp/DocumentRoot:/var/www/html
+    #restart: no         # change to always or unless-stopped for non-dev envs
+    depends_on:
+      - db              # Ensure DB is up before starting web
+    networks:
+      - app-network
+    env_file:
+        ./web/variables.env
+
+  db:
+    build:
+      context: ./mysql
+      dockerfile: Dockerfile
+    container_name: sboanalytics_mysql
+    ports:
+      - "23306:3306" # Host port 23306 -> Container port 3306 (MySQL)
+    env_file:
+        ./mysql/variables.env
+    volumes:
+      - ./mysql/my.cnf:/etc/mysql/my.cnf   # Persistent storage for MySQL data
+      - ./mysql_data:/var/lib/mysql   # Persistent storage for MySQL data
+      - ../db/:/docker-entrypoint-initdb.d  #init scripts
+    #restart: no                     # change to always or unless-stopped for non-dev envs
+    networks:
+      - app-network
+
+
+
+networks:
+  app-network:
+    driver: bridge # Default bridge network for communication between services
