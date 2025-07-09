@@ -28,6 +28,21 @@ function SBO_API_Error_Response($statusCode, $errorTitle, $errorDetails){
     echo json_encode($msg);
 }
 
+function SBO_API_ResponseStart($limit, $page){
+    echo '{"limit":'.$limit.',"page":'.$page.',"data":';
+}
+
+function SBO_API_ResponseEnd($hasMoreResults){
+    echo ',"hasMoreResults":';
+    if($hasMoreResults){
+        echo 'true';
+    }
+    else{
+        echo 'false';
+    }
+    echo '}';
+}
+
 SBO_Authenticate();
 
 header('Content-type: application/json');

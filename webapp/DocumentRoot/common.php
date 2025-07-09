@@ -84,7 +84,7 @@ function SBO_DB_Connect(){
  * @param function $callbackFunction
  * @return boolean|int|array
  */
-function SBO_DB_Query($sql, $params, $callbackFunction = null) {
+function SBO_DB_Query($sql, $params, $limit, &$hasMore, $callbackFunction = null) {
     global $SBO_DB_PDO_INSTANCE;
     if($SBO_DB_PDO_INSTANCE === null){
         SBO_DB_Connect();
@@ -100,10 +100,14 @@ function SBO_DB_Query($sql, $params, $callbackFunction = null) {
             echo '[';
         }
         while($row=$stmt->fetch(PDO::FETCH_ASSOC)){
+            $numrows++;
+            if($numrows > $limit){
+                $hasMore = true;
+                break;
+            }
             if($callbackFunction){
                 $callbackFunction($row);
                 echo ',';
-                $numrows++;
             }
             else{
                 $results[] = $row;

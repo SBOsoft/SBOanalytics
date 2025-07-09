@@ -36,6 +36,15 @@ if(!$metricType){
     return;
 }
 
+$limit = (int)($_REQUEST['limit'] ?? 50);
+if($limit >1000){
+    $limit = 1000;
+}
+$page = (int)($_REQUEST['page'] ?? 1);
+if($page >1000){
+    $page = 1;
+}
+
 $now = new DateTimeImmutable();
 
 //twStart and twEnd will have '2025-07-11 11:00' format
@@ -102,8 +111,14 @@ switch($groupBy){
         $sql.=' GROUP BY metric_type, key_value';
         break;
 }
-
+$sql.= ' LIMIT :limit OFFSET :offset';
+$sqlParams[':limit'] = ($limit+1);
+$sqlParams[':offset'] = ($page - 1) * $limit;
 //echo $sql;
 //print_r($sqlParams);
+SBO_API_ResponseStart($limit, $page);
+$hasMoreResults = false;
 
-SBO_DB_Query($sql, $sqlParams, 'SBO_PrintQueryResultRowAsJson');
+SBO_DB_Query($sql, $sqlParams, $limit, $hasMoreResults, 'SBO_PrintQueryResultRowAsJson');
+
+SBO_API_ResponseEnd($hasMoreResults);
