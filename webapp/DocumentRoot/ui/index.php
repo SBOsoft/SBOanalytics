@@ -18,8 +18,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-//UI 
-
 define('SBO_FILE_INCLUDED_PROPERLY', true);
 include('../common.php');
 
@@ -81,40 +79,45 @@ SBO_Authenticate();
                 </div>
             </div>
         </nav>
-        <div class="text-center">
-            <form action="" class="form form-sm">
+        <div class="text-center px-4 py-2 border-bottom bg-primary-subtle">
+            <form action="" class="form form-sm" onsubmit="return false;">
                 <div class="row align-items-center">
-                    <div class="col-auto">
-                    Domain:
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-auto my-1 row">
+                        <label class="col-3 col-md-auto col-form-label">Domain</label>
+                        <div class="col-auto">
+                            <select name="selectedDomain" id="selectedDomainSelect" v-model="domainId" class="form-select">
+                                <option v-for="(row) in allDomains" v-bind:value="row.domainId">{{ row.domainName}}</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="col-auto">
-                        <select name="selectedDomain" id="selectedDomainSelect" v-model="domainId" class="form-select">
-                            <option v-for="(row) in allDomains" v-bind:value="row.domainId">{{ row.domainName}}</option>
-                        </select>
+                    <div class="col-12 col-sm-6 col-md-6 col-lg-auto my-1 row">
+                        <label class="col-3 col-md-auto col-form-label">Between</label>
+                        <div class="col-auto">
+                            <input type="datetime-local" id="twStartInput" v-model="twStartStr" class="form-control">
+                        </div>
                     </div>
-                    <div class="col-auto">
-                    Period:
+                    <div class="col-12 col-sm-6 col-md-6 col-lg-auto my-1 row">
+                        <label class="col-3 col-md-auto col-form-label">and</label>
+                        <div class="col-auto">
+                            <input type="datetime-local" id="twEndInput" v-model="twEndStr" class="form-control">
+                        </div>
                     </div>
-                    <div class="col-3 col-md-2 col-xxl-1">
-                    <input type="text" id="twStartInput" v-bind:value="twStartStr" class="form-control">
-                    </div>
-                    <div class="col-auto">
-                    to 
-                    </div>
-                    <div class="col-3 col-md-2 col-xxl-1">
-                    <input type="text" id="twEndInput" v-bind:value="twEndStr" class="form-control">
-                    </div>
-                    <div class="col-auto">
-                    Group by: 
-                    </div>
-                    <div class="col-auto">
-                        <select name="groupBy" id="groupBySelect" v-model="groupBy" class="form-select">
-                            <option value="">None</option>
-                            <option value="hour">Hour</option>
-                            <option value="day">Day</option>
-                            <option value="month">month</option>
+                    <div class="col-12 col-md-4 col-lg-auto row my-1">
+                        <label class="col-3 col-md-auto col-form-label">Group by</label>
+                        <div class="col-auto">
+                            <select name="groupBy" id="groupBySelect" v-model="groupBy" class="form-select">
+                                <option value="">None</option>
+                                <option value="hour">Hour</option>
+                                <option value="day">Day</option>
+                                <option value="month">Month</option>
 
-                        </select>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-auto my-1 row">
+                        <div class="col-auto">
+                        <button class="btn btn-primary" v-on:click="loadCharts" type="button">Show Analytics</button>
+                        </div>
                     </div>
                 </div>
             </form>
@@ -137,43 +140,50 @@ SBO_Authenticate();
             <div class="row mt-2">
                 <div class="col-md-6 col-lg-6">
                     <sbo-piechart ref="statusCodesPieChart" target-element-id="statusCodesPieChart" title="Response status codes"  series-name="Status codes"></sbo-piechart>                    
-                    <sbo-details-metrics ref="statusCodesDetailedMetrics" v-bind:show-key-value="false" elem-id="statusCodesDetailedMetrics"></sbo-details-metrics>
+                    <sbo-details-metrics ref="statusCodesDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="statusCodesDetailedMetrics"></sbo-details-metrics>
                 </div>
                 <div class="col-md-6 col-lg-6">
                     <sbo-piechart ref="httpMethodsPieChart" target-element-id="httpMethodsPieChart" title="Http methods"  series-name="Http methods"></sbo-piechart>                    
-                    <sbo-details-metrics ref="httpMethodsDetailedMetrics" v-bind:show-key-value="false" elem-id="httpMethodsDetailedMetrics"></sbo-details-metrics>
+                    <sbo-details-metrics ref="httpMethodsDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="httpMethodsDetailedMetrics"></sbo-details-metrics>
                 </div>
             </div>
             <div class="row mt-2">                
-                <div class="col-md-8 col-lg-6">
-                    <sbo-piechart ref="referersPieChart" target-element-id="referersPieChart" title="Referers"  series-name="Referers" v-bind:hide-legends="true"></sbo-piechart>                    
+                <div class="col-md-6 col-lg-6">
+                    <sbo-piechart ref="referersPieChart" target-element-id="referersPieChart" title="Top referers"  series-name="Referers" v-bind:hide-legends="true"></sbo-piechart>                    
+                    <sbo-details-metrics ref="referersDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="referersDetailedMetrics"></sbo-details-metrics>
                 </div>
-                <div class="col-md-8 col-lg-6">
-                    <sbo-piechart ref="pathsPieChart" target-element-id="pathsPieChart" title="Paths"  series-name="Paths" v-bind:hide-legends="true"></sbo-piechart>                    
+                <div class="col-md-6 col-lg-6">
+                    <sbo-piechart ref="pathsPieChart" target-element-id="pathsPieChart" title="Top paths"  series-name="Paths" v-bind:hide-legends="true"></sbo-piechart>                    
+                    <sbo-details-metrics ref="pathsDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="pathsDetailedMetrics"></sbo-details-metrics>
                 </div>
             </div>
             <div class="row mt-2">                
-                <div class="col-md-8 col-lg-6">
+                <div class="col-md-6 col-lg-6">
                     <sbo-piechart ref="uaFamilyPieChart" target-element-id="uaFamilyPieChart" title="User agents"  series-name="User agents" v-bind:hide-legends="true"></sbo-piechart>
+                    <sbo-details-metrics ref="uaFamilyDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="uaFamilyDetailedMetrics"></sbo-details-metrics>
                 </div>
-                <div class="col-md-8 col-lg-6">
+                <div class="col-md-6 col-lg-6">
                     <sbo-piechart ref="osFamilyPieChart" target-element-id="osFamilyPieChart" title="Operating systems"  series-name="Operating systems" v-bind:hide-legends="true"></sbo-piechart>
+                    <sbo-details-metrics ref="osFamilyDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="osFamilyDetailedMetrics"></sbo-details-metrics>
                 </div>
             </div>
             <div class="row mt-2">                
-                <div class="col-md-8 col-lg-6">
+                <div class="col-md-6 col-lg-6">
                     <sbo-piechart ref="deviceTypePieChart" target-element-id="deviceTypePieChart" title="Device types"  series-name="Device types" v-bind:hide-legends="true"></sbo-piechart>
+                    <sbo-details-metrics ref="deviceTypesDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="deviceTypesDetailedMetrics"></sbo-details-metrics>
                 </div>                
-                <div class="col-md-8 col-lg-6">
+                <div class="col-md-6 col-lg-6">
                     <sbo-piechart ref="isHumanPieChart" target-element-id="isHumanPieChart" title="Client types"  series-name="Client types" v-bind:hide-legends="false"></sbo-piechart>
+                    <sbo-details-metrics ref="isHumanDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="isHumanDetailedMetrics"></sbo-details-metrics>
                 </div>
             </div>
             <div class="row mt-2">                
-                <div class="col-md-8 col-lg-6">
+                <div class="col-md-6 col-lg-6">
                     <sbo-piechart ref="requestIntentPieChart" target-element-id="requestIntentPieChart" title="Request intents"  series-name="Request intents" v-bind:hide-legends="false"></sbo-piechart>
+                    <sbo-details-metrics ref="intentsDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="intentsDetailedMetrics"></sbo-details-metrics>
                 </div>
             </div>            
-        </div>
+        </div>        
     </div>
 
     <script>
@@ -186,56 +196,51 @@ SBO_Authenticate();
             },
             // Data properties for the component
             data() {
-                return {
-                    
-                    twStart:202505010000,
-                    twEnd: 202506010000,
+                return {                    
                     allDomains:[],
-                    domainId: 1,    //TODO fix
-                    error: null,             // Error message if data fetching fails
-                    resizeTimer: null        // Timer for debouncing window resize
+                    domainId: 0,
+                    error: 'Select domain and period and click Show Analytics to start',
+                    twStartStr:'<?php 
+                        $lastWeek = strtotime("-1 week");
+                        echo date('Y-m-d', $lastWeek).'T00:00';
+                    ?>',
+                    twEndStr:'<?php echo date('Y-m-d').'T'.date('h:i');?>',
+                    groupBy:'day'
                 };
             },
-            // Lifecycle hook: called after the component is mounted to the DOM
             mounted() {
+            },            
+            beforeMount() {
                 this.loadAllDomains();
-                
-                this.loadTotalRequestsData();
-                this.loadBytesSentData();
-                this.loadRequestsByStatusCodesData();
-                this.loadRequestsByHttpMethodsData();
-                
-                this.loadRequestsByReferersData();
-                this.loadRequestsByPathsData();
-                
-                this.loadUAFamiliesData();
-                this.loadOSFamiliesData();
-                
-                this.loadDeviceTypesData();
-                
-                this.loadIsHumanData();
-                this.loadRequestIntentsData();
-
-                // Add a global event listener for window resize to make charts responsive
-                // We debounce the resize event to prevent excessive re-rendering
-                window.addEventListener('resize', this.resizeCharts);
             },
-            // Lifecycle hook: called before the component is unmounted from the DOM
-            beforeUnmount() {
-                // Clean up the resize event listener to prevent memory leaks
-                window.removeEventListener('resize', this.resizeCharts);
-            },
-            computed:{
-                twStartStr(){
-                    return 'TW START';
+            computed:{                
+                twStart(){
+                    return this.twStartStr.replace(/[^0-9]+/, '');
                 },
-                twEndStr(){
-                    return 'TW END';
+                twEnd(){
+                    return this.twEndStr.replace(/[^0-9]+/, '');
                 }
             },
             // Methods for the component
             methods: {
-                
+                loadCharts(){
+                    this.error = '';
+                    this.loadTotalRequestsData();
+                    this.loadBytesSentData();
+                    this.loadRequestsByStatusCodesData();
+                    this.loadRequestsByHttpMethodsData();
+
+                    this.loadRequestsByReferersData();
+                    this.loadRequestsByPathsData();
+
+                    this.loadUAFamiliesData();
+                    this.loadOSFamiliesData();
+
+                    this.loadDeviceTypesData();
+
+                    this.loadIsHumanData();
+                    this.loadRequestIntentsData();  
+                },
                 loadAllDomains(){
                     var self = this;
                     window.fetch('../api/domains').then((response)=>{
@@ -245,51 +250,43 @@ SBO_Authenticate();
                     });
                 },
                 chartClicked(chartType, chartId, clickParams){
-                    console.log(clickParams);
                     switch(chartId){
                         case 'statusCodesPieChart':
                             this.$refs.statusCodesDetailedMetrics.initParams(this.domainId, 3, clickParams.name, this.twStart, this.twEnd, 20, 'Status code:' + clickParams.name);
-                            this.$refs.statusCodesDetailedMetrics.goToPage(1);
+                            this.$refs.statusCodesDetailedMetrics.goToPage(1, this.groupBy);
                             break;
                         case 'httpMethodsPieChart':
                             this.$refs.httpMethodsDetailedMetrics.initParams(this.domainId, 5, clickParams.name, this.twStart, this.twEnd, 20, 'Method:' + clickParams.name);
-                            this.$refs.httpMethodsDetailedMetrics.goToPage(1);
+                            this.$refs.httpMethodsDetailedMetrics.goToPage(1, this.groupBy);
                             
                             break;
-                        case 'referersPieChart':
-                            this.detailedLogsTitle='Referer:' + clickParams.name;
-                            this.detailedViewShowKeyValue = false;
-                            this.loadDetailedMetrics(6, clickParams.name);
+                        case 'referersPieChart':                            
+                            this.$refs.referersDetailedMetrics.initParams(this.domainId, 6, clickParams.name, this.twStart, this.twEnd, 20, 'Referer:' + clickParams.name);
+                            this.$refs.referersDetailedMetrics.goToPage(1, this.groupBy);                            
                             break;
-                        case 'pathsPieChart':
-                            this.detailedLogsTitle='Path:' + clickParams.name;
-                            this.detailedViewShowKeyValue = false;
-                            this.loadDetailedMetrics(7, clickParams.name);
+                        case 'pathsPieChart':                            
+                            this.$refs.pathsDetailedMetrics.initParams(this.domainId, 7, clickParams.name, this.twStart, this.twEnd, 20, 'Path:' + clickParams.name);
+                            this.$refs.pathsDetailedMetrics.goToPage(1, this.groupBy);
                             break;
                         case 'uaFamilyPieChart':
-                            this.detailedLogsTitle='UA:' + clickParams.name;
-                            this.detailedViewShowKeyValue = false;
-                            this.loadDetailedMetrics(11, clickParams.name);
+                            this.$refs.uaFamilyDetailedMetrics.initParams(this.domainId, 11, clickParams.name, this.twStart, this.twEnd, 20, 'User agent:' + clickParams.name);
+                            this.$refs.uaFamilyDetailedMetrics.goToPage(1, this.groupBy);
                             break;
                         case 'osFamilyPieChart':
-                            this.detailedLogsTitle='OS:' + clickParams.name;
-                            this.detailedViewShowKeyValue = false;
-                            this.loadDetailedMetrics(12, clickParams.name);
+                            this.$refs.osFamilyDetailedMetrics.initParams(this.domainId, 12, clickParams.name, this.twStart, this.twEnd, 20, 'OS:' + clickParams.name);
+                            this.$refs.osFamilyDetailedMetrics.goToPage(1, this.groupBy);
                             break;
                         case 'deviceTypePieChart':
-                            this.detailedLogsTitle='Device:' + clickParams.name;
-                            this.detailedViewShowKeyValue = false;
-                            this.loadDetailedMetrics(13, clickParams.name);
+                            this.$refs.deviceTypesDetailedMetrics.initParams(this.domainId, 13, clickParams.name, this.twStart, this.twEnd, 20, 'Device:' + clickParams.name);
+                            this.$refs.deviceTypesDetailedMetrics.goToPage(1, this.groupBy);
                             break;
                         case 'isHumanPieChart':
-                            this.detailedLogsTitle='Human:' + clickParams.name;
-                            this.detailedViewShowKeyValue = false;
-                            this.loadDetailedMetrics(14, clickParams.name);
+                            this.$refs.isHumanDetailedMetrics.initParams(this.domainId, 14, clickParams.name, this.twStart, this.twEnd, 20, 'Human:' + clickParams.name);
+                            this.$refs.isHumanDetailedMetrics.goToPage(1, this.groupBy);
                             break;
                         case 'requestIntentPieChart':
-                            this.detailedLogsTitle='Intent:' + clickParams.name;
-                            this.detailedViewShowKeyValue = false;
-                            this.loadDetailedMetrics(15, clickParams.name);
+                            this.$refs.intentsDetailedMetrics.initParams(this.domainId, 15, clickParams.name, this.twStart, this.twEnd, 20, 'Intent:' + clickParams.name);
+                            this.$refs.intentsDetailedMetrics.goToPage(1, this.groupBy);
                             break;
                             
                     }
@@ -303,11 +300,13 @@ SBO_Authenticate();
                 },                
                 loadTotalRequestsDataForBarChart(metricType, chartId){
                     var self = this;
-                    var url = '../api/metrics?domainId='+this.domainId+'&metricType='+metricType+'&twStart=' + this.twStart + '&twEnd=' + this.twEnd;
+                    var url = '../api/metrics?domainId='+encodeURIComponent(this.domainId)+
+                            '&metricType='+encodeURIComponent(metricType)+
+                            '&twStart=' + encodeURIComponent(this.twStart) + 
+                            '&twEnd=' + encodeURIComponent(this.twEnd) + 
+                            '&groupBy=' + encodeURIComponent(this.groupBy);
                     window.fetch(url).then((response)=>{                        
                         response.json().then((parsedJson)=>{
-                        console.log("parsedJson in loadTotalRequestsDataForBarChart");    
-                        console.log(parsedJson);
                             let chartData = {
                                 xLabels:[],
                                 values:[]
@@ -365,8 +364,6 @@ SBO_Authenticate();
                     }
                     window.fetch(url).then((response)=>{                        
                         response.json().then((parsedJson)=>{
-                        console.log("parsedJson in loadDataGroupedByKey");    
-                        console.log(parsedJson);
                             let chartData = {
                                 legends:[],
                                 values:[]
@@ -386,24 +383,6 @@ SBO_Authenticate();
                         
                     });                    
                 },
-
-                
-
-                
-
-                /**
-                 * Resizes all ECharts instances.
-                 * This method is debounced to prevent performance issues on rapid window resizing.
-                 */
-                resizeCharts() {
-                    clearTimeout(this.resizeTimer); // Clear previous timer
-                    this.resizeTimer = setTimeout(() => {
-                        // Only resize if the chart instance exists
-                        if (this.barChart) this.barChart.resize();
-                        if (this.pieChart) this.pieChart.resize();
-                        if (this.stackedLineChart) this.stackedLineChart.resize();
-                    }, 200); // Wait 200ms after the last resize event
-                }
             }
         });
 

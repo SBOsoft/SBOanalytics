@@ -304,7 +304,7 @@ const SBOPieChart  = {
 
 const SBODetailedMetricsView  = {
     props:{
-        showKeyValue: Boolean,
+        showKeyValueProp: Boolean,
         elemId: String
     },
     data: function() {
@@ -315,10 +315,14 @@ const SBODetailedMetricsView  = {
             domainId:0,
             metricType: 0,
             keyValue: null,
+            showKeyValue: this.showKeyValueProp,
             twStart:0,
             twEnd:0,
             limit:20,
-            title:''
+            title:'',
+            groupBy:'',
+            enlarged:false,
+            stylesBeforeEnlarge: {}
         };
     },
     methods: {
@@ -331,16 +335,72 @@ const SBODetailedMetricsView  = {
             this.limit = limitParam;
             this.title = titleParam;
         },
+        hideDetails(){
+            document.getElementById(this.elemId).style.display='none';
+        },
+        resize(){
+            if(this.enlarged){
+                this.enlarged = false;
+                let elem = document.getElementById(this.elemId);
+                elem.style.background=this.stylesBeforeEnlarge.background;
+                elem.style.position=this.stylesBeforeEnlarge.position;
+                elem.style.left=this.stylesBeforeEnlarge.left;
+                elem.style.top=this.stylesBeforeEnlarge.top;
+                elem.style.width=this.stylesBeforeEnlarge.width;
+                elem.style.height=this.stylesBeforeEnlarge.height;
+                elem.style.zIndex=this.stylesBeforeEnlarge.zIndex;
+                elem.style.padding = this.stylesBeforeEnlarge.padding;
+                elem.style.margin = this.stylesBeforeEnlarge.margin;
+                this.$refs.lineChart.resize();
+            }
+            else{
+                let elem = document.getElementById(this.elemId);
+                this.stylesBeforeEnlarge.background = elem.style.background;
+                this.stylesBeforeEnlarge.position = elem.style.position;
+                this.stylesBeforeEnlarge.left = elem.style.left;
+                this.stylesBeforeEnlarge.top = elem.style.top;
+                this.stylesBeforeEnlarge.width = elem.style.width;
+                this.stylesBeforeEnlarge.height = elem.style.height;
+                this.stylesBeforeEnlarge.zIndex = elem.style.zIndex;
+                this.stylesBeforeEnlarge.padding =  elem.style.padding;
+                this.stylesBeforeEnlarge.margin = elem.style.margin;
+                console.log(this.stylesBeforeEnlarge);
+                elem.style.background = '#fff';
+                elem.style.position='fixed';
+                elem.style.left=0;
+                elem.style.top=0;
+                elem.style.padding='20px 20px 20px 20px';
+                elem.style.width=window.innerWidth+'px';
+                elem.style.height=document.documentElement.clientHeight+'px';
+                elem.style.zIndex=99;
+                elem.style.margin='0 0 0 0';
+                this.enlarged = true;
+                this.$refs.lineChart.resize();
+            }
+        },
         formatTW(tw, index){
             return SBO_FormatTimeWindow(tw, this.detailedLogs, index);
         },
-        goToPage(pageNo){
+        removeKeyValueFilter(){
+            this.keyValue = null;
+            this.title = 'All results';
+            this.showKeyValue = true;
+            this.goToPage(1);
+        },
+        goToPage(pageNo, groupByParam){
+            if(groupByParam){
+                this.groupBy = groupByParam;
+            }
+            document.getElementById(this.elemId).style.display='';
             var self = this;
             this.page = pageNo;
             var url = '../api/metrics?domainId='+this.domainId+'&metricType='+this.metricType+
                     '&twStart=' + this.twStart + '&twEnd=' + this.twEnd;
             if(this.keyValue){
                 url+='&keyValue=' + encodeURIComponent(this.keyValue);
+            }
+            if(this.groupBy){
+                url+='&groupBy=' + encodeURIComponent(this.groupBy);
             }
             url+='&page=' + pageNo + '&limit=' + this.limit;
             window.fetch(url).then((response)=>{                        
@@ -376,9 +436,14 @@ const SBODetailedMetricsView  = {
 <div class="table-responsive mt-2" v-bind:id="elemId">
     <div v-if="detailedLogs && detailedLogs.length>0" class="card">
         <div class="card-body">
-            <h6 class="text-nowrap">{{ title }}</h6>
+            <div class="d-flex flex-row justify-content-between">
+                <h6 class="text-nowrap">{{ title }}</h6>
+                <div>
+<button v-on:click="hideDetails" class="btn btn-outline"><i class="bi bi-x-lg"></i></button>
+<button v-on:click="resize" class="btn btn-outline"><i class="bi bi-arrows-fullscreen"></i></button></div>
+            </div>
             <div class="row">
-                <div class="col-4">
+                <div class="col-md-4">
                     <table class="table table-sm small table-hover w-auto">
                         <thead class="table-light">
                             <tr>
@@ -405,10 +470,11 @@ const SBODetailedMetricsView  = {
                         </button>
                     </div>
                 </div>
-                <div class="col-8">
+                <div class="col-md-8">
                     <sbo-linechart ref="lineChart" v-bind:no-border="true" v-bind:target-element-id="elemId +'_linechart'" v-bind:title="title" y-axis-name="Count" series-name="Counts"></sbo-linechart>
                 </div>
             </div>
+            <div v-if="keyValue">Showing results for {{ keyValue }}. <button v-on:click="removeKeyValueFilter()" class="btn btn-sm btn-link">Show all</button> </div>
         </div>
     </div>
 </div>`
@@ -438,12 +504,25 @@ const SBOLineChart  = {
             });
             
         },
+        resize(){
+            if(this.chartObj){
+                /*
+                let self = this;
+                self.chartObj.resize();
+                //this.showChart();                
+                this.$nextTick(()=>{
+                  self.showChart();  
+                });
+                */
+            }
+        },
         showError(errMsg){
             let elem = document.getElementById(this.targetElementId);
             elem.innerText='Error loading chart:' + errMsg;
         },
         showChart(chartData){
             const option = {
+                animation: false,
                 title: {
                     text: this.title,
                     left: 'center',
@@ -492,7 +571,7 @@ const SBOLineChart  = {
                         name: this.seriesName,
                         type: 'line',
                         data: chartData.values,
-                        smooth: true,
+                        smooth: false,
                         itemStyle: {
                             color: this.lineColor || '#7209b7',                            
                         },
