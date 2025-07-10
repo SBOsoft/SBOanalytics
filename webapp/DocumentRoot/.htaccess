@@ -1,6 +1,8 @@
 RewriteEngine On
 
-RewriteCond %{REQUEST_URI} ^/api/
-RewriteRule ^api/metrics  api/index.php?act=metrics [L,QSA]
-RewriteRule ^api/domains  api/index.php?act=domains [L,QSA]
+RewriteCond %{REQUEST_URI} api/metrics$
+RewriteRule api/metrics  api/index.php?act=metrics [L,QSA]
+
+RewriteCond %{REQUEST_URI} api/domains$
+RewriteRule api/domains  api/index.php?act=domains [L,QSA]
 
