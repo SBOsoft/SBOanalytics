@@ -25,6 +25,12 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
 ///////////config
 
 define('SBO_AUTH_TYPE', getenv('SBO_AUTH_TYPE'));
+define('SBO_DB_HOST', getenv('SBO_DB_HOST'));
+define('SBO_DB_NAME', getenv('SBO_DB_NAME'));
+define('SBO_DB_USER', getenv('SBO_DB_USER'));
+define('SBO_DB_PASSWORD', getenv('SBO_DB_PASSWORD'));
+define('SBO_AUTH_SINGLE_USER', getenv('SBO_AUTH_SINGLE_USER'));
+define('SBO_AUTH_SINGLE_PWD', getenv('SBO_AUTH_SINGLE_PWD'));
 
 //database connection
 $SBO_DB_PDO_INSTANCE = null;
@@ -33,9 +39,51 @@ $SBO_DB_PDO_INSTANCE = null;
 
 
 //////////////common functions
-
-function SBO_Authenticate(){
-    //TODO implement
+/** 
+ * SBO_AUTH_TYPE environment variable MUST be set to one of the following values
+ * - none
+ * - single
+ * TODO support for More types will be added later
+ * 
+ */
+function SBO_CheckIsAuthenticated($isApi){
+    if(!defined('SBO_AUTH_TYPE')){
+        if($isApi){
+            SBO_API_Error_Response(500, 'Invalid application configuration', 'Authentication type is not defined in configuration');
+            exit;
+        }
+        else{
+            die('Invalid application configuration. Authentication type is not defined');
+        }
+    }
+    switch(SBO_AUTH_TYPE){
+        case 'none':
+            //nothing
+            break;
+        case 'single':
+            if($_SESSION['authOK'] ?? false){
+                //ok
+            }
+            else{
+                if($isApi){
+                    SBO_API_Error_Response(401, 'Authorization required', 'You are not authorized to access to this endpoint');
+                }
+                else{
+                    header('Location: auth-form');
+                }
+                exit;
+            }
+            break;
+        default:
+            if($isApi){
+                SBO_API_Error_Response(500, 'Invalid application configuration', 'Invalid authentication type');
+                exit;
+            }
+            else{
+                die('Invalid application configuration. Invalid authentication type');
+            }
+            break;
+    }
 }
 
 function SBO_PrintQueryResultRowAsJson($row){

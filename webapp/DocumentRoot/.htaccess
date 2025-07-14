@@ -6,3 +6,32 @@ RewriteRule api/metrics  api/index.php?act=metrics [L,QSA]
 RewriteCond %{REQUEST_URI} api/domains$
 RewriteRule api/domains  api/index.php?act=domains [L,QSA]
 
+RewriteCond %{REQUEST_URI} ui/auth-form$
+RewriteRule ui/auth-form  ui/index.php?act=auth-form [L,QSA]
+
+RewriteCond %{REQUEST_URI} ui/auth-submit$
+RewriteRule ui/auth-submit  ui/index.php?act=auth-submit [L,QSA]
+
+
+RewriteCond %{REQUEST_URI} ui/dashboard$
+RewriteRule ui/dashboard  ui/index.php?act=dashboard [L,QSA]
+
+#You can set environment variables here or in virtual host config
+
+#Authentication type. REQUIRED. Supported values: none, single (more to be added later)
+#SetEnv SBO_AUTH_TYPE single
+
+#Database host
+#SetEnv SBO_DB_HOST 127.0.0.1   
+#Database name
+#SetEnv SBO_DB_NAME sboanalytics
+#Database user
+#SetEnv SBO_DB_USER sboanalytics
+#Password for the database user
+#SetEnv SBO_DB_PASSWORD "your-strong-mysql-password"
+
+
+#Username to be used when SBO_AUTH_TYPE is single. REQUIRED when SBO_AUTH_TYPE is single
+#SetEnv SBO_AUTH_SINGLE_USER someusername
+#Password to be used when SBO_AUTH_TYPE is single. REQUIRED when SBO_AUTH_TYPE is single
+#SetEnv SBO_AUTH_SINGLE_PWD  "PUT_A_STRONG_PASSWORD_HERE_IF_YOU_WILL_USE_IT"

@@ -22,6 +22,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 define('SBO_FILE_INCLUDED_PROPERLY', true);
 include('../common.php');
 
+session_start();
+
 function SBO_API_Error_Response($statusCode, $errorTitle, $errorDetails){
     http_response_code($statusCode);
     $msg = array('error'=>$errorTitle, 'description'=>$errorDetails);
@@ -43,9 +45,9 @@ function SBO_API_ResponseEnd($hasMoreResults){
     echo '}';
 }
 
-SBO_Authenticate();
-
 header('Content-type: application/json');
+
+SBO_CheckIsAuthenticated(true);
 
 $action = $_REQUEST['act'];
 
