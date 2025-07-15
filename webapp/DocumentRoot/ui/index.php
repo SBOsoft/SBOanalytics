@@ -77,7 +77,6 @@ switch($action){
 </head>
 <body>
     <?php
-    echo '----'.SBO_AUTH_TYPE.'000000';
     switch($action){
         case 'auth-form':
             include('auth-form.php');
