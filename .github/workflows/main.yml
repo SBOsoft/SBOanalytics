@@ -1,0 +1,54 @@
+name: Create Release Zip and Draft Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_name:
+        description: 'The name for the draft release using yyyy.mm.dd.xxx format, e.g 2025.07.15.001'
+        required: true
+        default: 'Draft Release - Manual Build'
+
+jobs:
+  build_and_release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create Zip Archive
+        run: |
+          SOURCE_PATH="web/DocumentRoot"
+          # Use github.run_id for a unique name when triggered manually,
+          # as github.sha might not be unique across manual runs if no new commits.
+          ZIP_FILE_NAME="SBOanalytics-${{ github.event.inputs.release_name }}.zip"
+          
+          # Navigate into the DocumentRoot itself
+          cd "$SOURCE_PATH"
+          
+          # Create the zip file by adding all contents from the current directory (DocumentRoot)
+          # The ' .' means "all files and directories in the current directory"
+          # The zip file will be created one level up (in 'web/')
+          # Then we move it to the root of the workspace
+          zip -r "../$ZIP_FILE_NAME" .
+          
+          # Move the zip file from 'web/' to the root of the workspace
+          mv "../$ZIP_FILE_NAME" "${{ github.workspace }}/$ZIP_FILE_NAME"
+          
+          echo "Created zip file: $ZIP_FILE_NAME"
+          ls -lh "${{ github.workspace }}" # Verify the zip file is created in the root of the workspace
+
+      - name: Create Draft GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # Using the input parameter for the release name
+          name: ${{ github.event.inputs.release_name }}
+          # Using input parameter for the tag
+          tag_name: ${{ github.event.inputs.release_name }}
+          body: |
+            This is a package containing the contents of the `web/DocumentRoot` folder. You can use this package to deploy SBOanalytics web app.
+          draft: true
+          prerelease: false
+          files: ${{ github.workspace }}/SBOanalytics-${{ github.event.inputs.release_name }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
