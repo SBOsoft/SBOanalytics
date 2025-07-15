@@ -18,7 +18,7 @@ jobs:
 
       - name: Create Zip Archive
         run: |
-          SOURCE_PATH="web/DocumentRoot"
+          SOURCE_PATH="webapp/DocumentRoot"
           # Use github.run_id for a unique name when triggered manually,
           # as github.sha might not be unique across manual runs if no new commits.
           ZIP_FILE_NAME="SBOanalytics-${{ github.event.inputs.release_name }}.zip"
@@ -28,11 +28,11 @@ jobs:
           
           # Create the zip file by adding all contents from the current directory (DocumentRoot)
           # The ' .' means "all files and directories in the current directory"
-          # The zip file will be created one level up (in 'web/')
+          # The zip file will be created one level up (in 'webapp/')
           # Then we move it to the root of the workspace
           zip -r "../$ZIP_FILE_NAME" .
           
-          # Move the zip file from 'web/' to the root of the workspace
+          # Move the zip file from 'webapp/' to the root of the workspace
           mv "../$ZIP_FILE_NAME" "${{ github.workspace }}/$ZIP_FILE_NAME"
           
           echo "Created zip file: $ZIP_FILE_NAME"
@@ -46,7 +46,7 @@ jobs:
           # Using input parameter for the tag
           tag_name: ${{ github.event.inputs.release_name }}
           body: |
-            This is a package containing the contents of the `web/DocumentRoot` folder. You can use this package to deploy SBOanalytics web app.
+            This is a package containing the contents of the `webapp/DocumentRoot` folder. You can use this package to deploy SBOanalytics web app.
           draft: true
           prerelease: false
           files: ${{ github.workspace }}/SBOanalytics-${{ github.event.inputs.release_name }}.zip
