@@ -25,12 +25,15 @@ jobs:
           
           # Navigate into the DocumentRoot itself
           cd "$SOURCE_PATH"
+
+          #copy license 
+          cp ../../LICENSE ./
           
           # Create the zip file by adding all contents from the current directory (DocumentRoot)
           # The ' .' means "all files and directories in the current directory"
           # The zip file will be created one level up (in 'webapp/')
           # Then we move it to the root of the workspace
-          zip -r "../$ZIP_FILE_NAME" . ../../LICENSE 
+          zip -r "../$ZIP_FILE_NAME" . 
           
           # Move the zip file from 'webapp/' to the root of the workspace
           mv "../$ZIP_FILE_NAME" "${{ github.workspace }}/$ZIP_FILE_NAME"
