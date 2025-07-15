@@ -6,7 +6,7 @@ on:
       release_name:
         description: 'The name for the draft release using yyyy.mm.dd.xxx format, e.g 2025.07.15.001'
         required: true
-        default: 'Draft Release - Manual Build'
+        default: ''
 
 jobs:
   build_and_release:
