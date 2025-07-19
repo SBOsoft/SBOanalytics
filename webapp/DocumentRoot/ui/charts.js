@@ -162,8 +162,8 @@ const SBOBarChart  = {
                     type: this.vertical ? 'value':'category',
                     data: this.vertical ? chartData.values: chartData.legends,
                     axisLabel: {
-                        rotate: 45, // Rotate labels for better readability if many categories
-                        interval: 0 // Display all labels
+                        rotate: this.vertical ? 0 : 45,
+                        interval: 0
                     },
                     axisTick: {
                         alignWithLabel: true
@@ -173,7 +173,11 @@ const SBOBarChart  = {
                     type: this.vertical ? 'category':'value',
                     name: this.yAxisName,
                     axisLabel: {
-                        formatter: '{value}'
+                        formatter: '{value}',
+                        interval: 0
+                    },
+                    axisTick: {
+                        alignWithLabel: true
                     },
                     data: this.vertical ? chartData.legends : chartData.values
                 },
