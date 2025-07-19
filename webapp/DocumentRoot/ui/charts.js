@@ -110,7 +110,8 @@ const SBOBarChart  = {
         yAxisName: String,
         seriesName: String,
         barColor: String,
-        hoverColor: String
+        hoverColor: String,
+        vertical: Boolean
     },
     data: function() {
         return {
@@ -131,6 +132,10 @@ const SBOBarChart  = {
             elem.innerText='Error loading chart:' + errMsg;
         },
         showChart(chartData){
+            if(this.vertical){
+                chartData.values.reverse();
+                chartData.legends.reverse();
+            }
             const option = {
                 title: {
                     text: this.title,
@@ -154,8 +159,8 @@ const SBOBarChart  = {
                     containLabel: true // Ensure labels are contained within the grid
                 },
                 xAxis: {
-                    type: 'category',
-                    data: chartData.xLabels,
+                    type: this.vertical ? 'value':'category',
+                    data: this.vertical ? chartData.values: chartData.legends,
                     axisLabel: {
                         rotate: 45, // Rotate labels for better readability if many categories
                         interval: 0 // Display all labels
@@ -165,11 +170,12 @@ const SBOBarChart  = {
                     }
                 },
                 yAxis: {
-                    type: 'value',
+                    type: this.vertical ? 'category':'value',
                     name: this.yAxisName,
                     axisLabel: {
                         formatter: '{value}'
-                    }
+                    },
+                    data: this.vertical ? chartData.legends : chartData.values
                 },
                 series: [
                     {
@@ -177,14 +183,17 @@ const SBOBarChart  = {
                         type: 'bar',
                         data: chartData.values,
                         barMaxWidth: 30, 
-                        itemStyle: {
-                            borderRadius: [5, 5, 0, 0], // Rounded corners on top of bars
+                        itemStyle: this.vertical ? {
+                            borderRadius: [0, 5, 5, 0],
+                            color: this.barColor || '#7209b7',                            
+                        } : {
+                            borderRadius: [5, 5, 0, 0],
                             color: this.barColor || '#7209b7',                            
                         },
                         emphasis: {
                             maxWidth: 50,
                             itemStyle: {
-                                color: this.hoverColor || '#f72585', // Highlight color on hover
+                                color: this.hoverColor || '#f72585',
                                 
                             }
                         },
@@ -364,7 +373,7 @@ const SBODetailedMetricsView  = {
                 this.stylesBeforeEnlarge.zIndex = elem.style.zIndex;
                 this.stylesBeforeEnlarge.padding =  elem.style.padding;
                 this.stylesBeforeEnlarge.margin = elem.style.margin;
-                console.log(this.stylesBeforeEnlarge);
+
                 elem.style.background = '#fff';
                 elem.style.position='fixed';
                 elem.style.left=0;
@@ -419,7 +428,6 @@ const SBODetailedMetricsView  = {
                         lineChartData.values.push(parsedJson.data[rowIndex].metric);
                         lineChartData.xLabels.push(SBO_FormatTimeWindow(parsedJson.data[rowIndex].tw, parsedJson.data, rowIndex));
                     }
-                    console.log(lineChartData);
                     self.$nextTick(()=>{
                         window.setTimeout(()=>{
                             self.$refs.lineChart.showChart(lineChartData);

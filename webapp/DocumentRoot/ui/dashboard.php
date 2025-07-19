@@ -116,8 +116,14 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                     <sbo-piechart ref="referersPieChart" target-element-id="referersPieChart" title="Top referers"  series-name="Referers" v-bind:hide-legends="true"></sbo-piechart>                    
                     <sbo-details-metrics ref="referersDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="referersDetailedMetrics"></sbo-details-metrics>
                 </div>
+                <!--
                 <div class="col-md-6 col-lg-6">
                     <sbo-piechart ref="pathsPieChart" target-element-id="pathsPieChart" title="Top paths"  series-name="Paths" v-bind:hide-legends="true"></sbo-piechart>                    
+                    <sbo-details-metrics ref="pathsDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="pathsDetailedMetrics"></sbo-details-metrics>
+                </div>
+                -->
+                <div class="col-md-6 col-lg-6">
+                    <sbo-barchart ref="pathsBarChart" target-element-id="pathsBarChart" title="Top paths"  series-name="Paths" v-bind:hide-legends="false" v-bind:vertical="true"></sbo-barchart>
                     <sbo-details-metrics ref="pathsDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="pathsDetailedMetrics"></sbo-details-metrics>
                 </div>
             </div>
@@ -228,10 +234,17 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                             this.$refs.referersDetailedMetrics.initParams(this.domainId, 6, clickParams.name, this.twStart, this.twEnd, 20, 'Referer:' + clickParams.name);
                             this.$refs.referersDetailedMetrics.goToPage(1, this.groupBy);                            
                             break;
+                        /*
                         case 'pathsPieChart':                            
                             this.$refs.pathsDetailedMetrics.initParams(this.domainId, 7, clickParams.name, this.twStart, this.twEnd, 20, 'Path:' + clickParams.name);
                             this.$refs.pathsDetailedMetrics.goToPage(1, this.groupBy);
                             break;
+                        */
+                        case 'pathsBarChart':                            
+                            this.$refs.pathsDetailedMetrics.initParams(this.domainId, 7, clickParams.name, this.twStart, this.twEnd, 20, 'Path:' + clickParams.name);
+                            this.$refs.pathsDetailedMetrics.goToPage(1, this.groupBy);
+                            break;
+                            
                         case 'uaFamilyPieChart':
                             this.$refs.uaFamilyDetailedMetrics.initParams(this.domainId, 11, clickParams.name, this.twStart, this.twEnd, 20, 'User agent:' + clickParams.name);
                             this.$refs.uaFamilyDetailedMetrics.goToPage(1, this.groupBy);
@@ -272,7 +285,7 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                     window.fetch(url).then((response)=>{                        
                         response.json().then((parsedJson)=>{
                             let chartData = {
-                                xLabels:[],
+                                legends:[],
                                 values:[]
                             };
                             for(let rowIndex in parsedJson.data){
@@ -280,8 +293,8 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                                     continue;
                                 }
                                 chartData.values.push(parsedJson.data[rowIndex].metric);
-                                chartData.xLabels.push(SBO_FormatTimeWindow(parsedJson.data[rowIndex].tw, parsedJson.data, rowIndex));
-                            }                        
+                                chartData.legends.push(SBO_FormatTimeWindow(parsedJson.data[rowIndex].tw, parsedJson.data, rowIndex));
+                            }                            
                             self.$refs[chartId].showChart(chartData);
                             self.$refs[chartId].chartObj.on('click', (clickParams)=>{
                                 self.chartClicked('bar', chartId, clickParams);
@@ -300,7 +313,8 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                     this.loadDataGroupedByKey(6, 'referersPieChart', 20);
                 },
                 loadRequestsByPathsData(){
-                    this.loadDataGroupedByKey(7, 'pathsPieChart', 20);
+                    //this.loadDataGroupedByKey(7, 'pathsPieChart', 20);
+                    this.loadDataGroupedByKey(7, 'pathsBarChart', 20);
                 },
                 loadUAFamiliesData(){
                     this.loadDataGroupedByKey(11, 'uaFamilyPieChart');

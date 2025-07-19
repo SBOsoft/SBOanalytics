@@ -111,6 +111,7 @@ switch($groupBy){
         $sql.=' GROUP BY metric_type, key_value';
         break;
 }
+$sql.= ' ORDER BY metric_type, key_value ';
 $sql.= ' LIMIT :limit OFFSET :offset';
 $sqlParams[':limit'] = ($limit+1);
 $sqlParams[':offset'] = ($page - 1) * $limit;
