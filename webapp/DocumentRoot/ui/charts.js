@@ -738,6 +738,9 @@ const SBOLogsView  = {
             this.showKeyValue = true;
             this.goToPage(1);
         },
+        calcRowNo(rowIndex){
+            return (this.limit * (this.page-1)) + rowIndex + 1;
+        },
         goToPage(pageNo, groupByParam){
             if(groupByParam){
                 this.groupBy = groupByParam;
@@ -778,6 +781,7 @@ const SBOLogsView  = {
             <table class="table table-sm small table-hover">
                 <thead class="table-light">
                     <tr>
+                        <th>#</th>
                         <th>Time</th>
                         <th>Client IP</th>
                         <th>User</th>
@@ -791,6 +795,7 @@ const SBOLogsView  = {
                 </thead>
                 <tbody>
                     <tr v-for="(row, index) in logData">
+                        <td v-if="row">{{ calcRowNo(index) }}</td>
                         <td v-if="row">{{ row.requestTimestamp }}</td>
                         <td v-if="row">{{ row.clientIP }}</td>
                         <td v-if="row">{{ row.remoteUser }}</td>

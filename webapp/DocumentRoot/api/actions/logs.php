@@ -59,7 +59,7 @@ $keyValue = trim($_REQUEST['keyValue'] ?? '');
 
 $sqlParams = array();
 
-$sql = 'SELECT host_id as hostId, request_ts as requestTimestamp, client_ip as clientIP, '
+$sql = 'SELECT host_id as hostId, request_ts as requestTimestamp, INET6_NTOA(client_ip) as clientIP, '
         . 'remote_user as remoteUser, http_method as method, path3 as basePath, request_uri as requestUri, '
         . 'http_status as statusCode, bytes_sent as bytesSent, '
         . 'referer, is_malicious as isMalicious, '

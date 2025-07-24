@@ -79,7 +79,7 @@ $twEndTS = filter_input(INPUT_GET, 'twEndTS', FILTER_VALIDATE_REGEXP, array('def
             {{ error }}
         </div>
         <sbo-logsview ref="logsView" elem-id="sboRawLogsView"></sbo-logsview>
-
+        <div class="text-secondary small my-2">Please note that depending on your configuration, some logs might not have been saved which may lead to differences between metrics and number of log entries displayed on this page</div>
     </div>        
 </div>
 
@@ -129,6 +129,7 @@ echo SBO_JsonEncode($defaultTwEndValue);
         },
         methods: {
             loadLogs() {
+                this.error = '';
                 this.$refs.logsView.initParams(this.domainId, this.keyName, this.keyValue, this.twStart, this.twEnd, 20, 'Logs');
                 this.$refs.logsView.goToPage(1);
             },
