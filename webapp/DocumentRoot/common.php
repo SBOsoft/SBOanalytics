@@ -98,6 +98,14 @@ function SBO_ParseTimeWindow($strValue){
     
 }
 
+function SBO_HtmlEncode($str){
+    return htmlspecialchars($str, ENT_HTML5 | ENT_QUOTES, 'UTF-8');
+}
+
+function SBO_JsonEncode($str){
+    echo json_encode($str);
+}
+
 //////// DB
 function SBO_DB_Connect(){
     global $SBO_DB_PDO_INSTANCE;

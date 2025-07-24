@@ -35,6 +35,10 @@ switch($action){
     case 'auth-submit':        
         include('auth-submit.php');
         return;     //return here, we don't need html etc, just validating submitted values
+    case 'logs':
+        $pageTitle='Log viewer';
+        
+        break;
     case 'dashboard':
     default:
         $pageTitle='Metrics Dashboard';
@@ -46,7 +50,7 @@ switch($action){
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title></title>
+    <title><?php echo SBO_HtmlEncode($pageTitle);?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.5.13/vue.global.prod.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -76,6 +80,33 @@ switch($action){
     </style>
 </head>
 <body>
+    <nav class="navbar navbar-expand-lg sbo-nav shadow-sm" data-bs-theme="dark">
+            <div class="container-fluid">
+                <div class="text-light">
+                <a class="navbar-brand me-2" href="https://www.sbosoft.net/sboanalytics" target="_blank">SBO Analytics</a>
+
+                <a class="text-white me-2" href="dashboard" title="Metrics dashboard">Metrics</a>
+
+                <a class="text-white" href="logs" title="Log viewer">Logs</a>
+
+                </div>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="https://github.com/SBOsoft/SBOanalytics" title="SBOanalytics github repository">
+                                <i class="bi bi-github"></i>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="https://www.sbosoft.net">SBOSOFT</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
     <?php
     switch($action){
         case 'auth-form':
@@ -83,6 +114,9 @@ switch($action){
             break;
         case 'auth-submit':
             include('auth-submit.php');
+            break;        
+        case 'logs':
+            include('log-viewer.php');
             break;        
         case 'dashboard':
         default:

@@ -55,6 +55,9 @@ switch($action){
     case 'domains':
         include('actions/domains.php');
         break;
+    case 'logs':
+        include('actions/logs.php');
+        break;
     case 'metrics':
         include('actions/metrics.php');
         break;

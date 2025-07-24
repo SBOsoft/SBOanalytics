@@ -51,8 +51,40 @@ function SBO_ShowElem(elemId){
                       (rect.top < 0 && rect.bottom > 0 && rect.height <= viewportHeight) || // Element starts above, but is smaller than viewport and visible
                       (rect.top >= 0 && rect.top < viewportHeight && rect.bottom > viewportHeight);
     if (!isVisible) {
-        elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+}
+
+function SBO_TimeWindowToDate(twNumeric){
+    if(!twNumeric){
+        return '';
+    }
+    let tw = '' + twNumeric;
+    let twFirst8 = '';
+    if(tw.length>8){
+        twFirst8 = tw.substring(0,8);
+    }
+    //like 202505230729
+    let y = tw.substring(0,4);
+    let m = tw.length>4 ? (tw.substring(4,6) - 1): 0;
+    let d = tw.length>6 ? tw.substring(6,8) : 0;
+    let h = tw.length>8 ? tw.substring(8,10) : 0;
+    let i = tw.length>10 ? tw.substring(10,12) : 0;
+    
+    let dt = new Date(y, m, d, h, i, 0);
+    
+    return dt;
+}
+
+function SBO_FormatDateAsTS(dateObject){
+    const yyyy = dateObject.getFullYear();
+    // Months are 0-indexed, so add 1
+    const mm = String(dateObject.getMonth() + 1).padStart(2, '0');
+    const dd = String(dateObject.getDate()).padStart(2, '0');
+    const HH = String(dateObject.getHours()).padStart(2, '0');
+    const MM = String(dateObject.getMinutes()).padStart(2, '0');
+    const ss = String(dateObject.getSeconds()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd} ${HH}:${MM}:${ss}`;
 }
 function SBO_FormatTimeWindow(twNumeric, detailedLogs, indexInLogsArray){
     if(!twNumeric){
@@ -331,6 +363,7 @@ const SBODetailedMetricsView  = {
             showKeyValue: this.showKeyValueProp,
             twStart:0,
             twEnd:0,
+            timeWindowSizeMinutes: 10,
             limit:20,
             title:'',
             groupBy:'',
@@ -339,12 +372,13 @@ const SBODetailedMetricsView  = {
         };
     },
     methods: {
-        initParams(domainIdParam, metricTypeParam, keyValueParam, twStartParam, twEndParam, limitParam, titleParam){
+        initParams(domainIdParam, metricTypeParam, keyValueParam, twStartParam, twEndParam, limitParam, titleParam, allDomains){
             this.domainId = domainIdParam;
             this.metricType = metricTypeParam;
             this.keyValue = keyValueParam;
             this.twStart = twStartParam;
             this.twEnd = twEndParam;
+            this.timeWindowSizeMinutes = allDomains[domainIdParam].timeWindowSizeMinutes || 10;
             this.limit = limitParam;
             this.title = titleParam;
         },
@@ -441,6 +475,64 @@ const SBODetailedMetricsView  = {
                 });                        
             });
         },
+        getLogsLink(row){
+            var link ='logs?domainId=' + encodeURIComponent(this.domainId);
+            //calculate tw start end row.tw is numeric timewindo value and this.timeWindowSizeMinutes is the size
+            //if this.groupBy is empty then use timeWindowSizeMinutes, otherwise use this.groupBy to calculate start - end times
+            let startDt = SBO_TimeWindowToDate(row.tw);
+            let startTwTS = SBO_FormatDateAsTS(startDt);
+            link+='&twStartTS=' + encodeURIComponent(startTwTS);
+            switch(this.groupBy){
+                case 'hour':
+                    startDt.setHours(startDt.getHours() + 1);
+                    break;
+                case 'day':
+                    startDt.setDate(startDt.getDate() + 1);
+                    break;
+                case 'month':
+                    startDt.setMonth(startDt.getMonth() + 1);
+                    break;
+                default:
+                    startDt.setMinutes(startDt.getMinutes() + this.timeWindowSizeMinutes);
+                    break;                    
+            }
+            link+='&twEndTS=' + encodeURIComponent(SBO_FormatDateAsTS(startDt));
+            switch(this.metricType){
+                case 3:
+                    link+='&keyName=statusCode';
+                    break;
+                case 4:
+                    link+='&keyName=clientIP';
+                    break;
+                case 5:
+                    link+='&keyName=method';
+                    break;
+                case 6:
+                    link+='&keyName=referer';
+                    break;
+                case 7:
+                    link+='&keyName=basePath';
+                    break;
+                case 11:
+                    link+='&keyName=uaFamily';
+                    break;
+                case 12:
+                    link+='&keyName=uaOS';
+                    break;
+                case 13:
+                    link+='&keyName=deviceType';
+                    break;
+                case 14:
+                    link+='&keyName=isHuman';
+                    break;
+                case 15:
+                    link+='&keyName=requestIntent';
+                    break;
+            }
+            link+='&keyValue=' + encodeURIComponent(row.keyValue);
+            console.log(link);
+            return link;
+        }
     },
     mounted: function () {
     },
@@ -468,7 +560,7 @@ const SBODetailedMetricsView  = {
                             <tr v-for="(row, index) in detailedLogs">
                                 <td v-if="row" class="text-end">{{ formatTW(row.tw, index) }}</td>
                                 <td v-if="row && showKeyValue">{{ row.keyValue }}</td>
-                                <td v-if="row" class="text-end">{{ row.metric }}</td>
+                                <td v-if="row" class="text-end"><a v-bind:href="getLogsLink(row)" target="_blank" title="View logs">{{ row.metric }}</a></td>
                             </tr>
                         </tbody>                    
                     </table>
@@ -607,4 +699,122 @@ const SBOLineChart  = {
             </div>
         </div>    
     </div>`
+};
+
+
+
+const SBOLogsView  = {
+    props:{        
+        elemId: String
+    },
+    data: function() {
+        return {
+            logData:[],
+            page: 1,
+            hasMoreResults: false,
+            domainId:0,
+            keyName: null,
+            keyValue: null,
+            twStart:null,
+            twEnd:null,
+            limit:20,
+            title:''
+        };
+    },
+    methods: {
+        initParams(domainIdParam, keyNameParam, keyValueParam, twStartParam, twEndParam, limitParam, titleParam){
+            this.domainId = domainIdParam;
+            this.keyName = keyNameParam;
+            this.keyValue = keyValueParam;
+            this.twStart = twStartParam;
+            this.twEnd = twEndParam;
+            this.limit = limitParam;
+            this.title = titleParam;
+        },        
+        removeKeyValueFilter(){
+            this.keyName = null;
+            this.keyValue = null;
+            this.title = 'All results';
+            this.showKeyValue = true;
+            this.goToPage(1);
+        },
+        goToPage(pageNo, groupByParam){
+            if(groupByParam){
+                this.groupBy = groupByParam;
+            }
+
+            var self = this;
+            this.page = pageNo;
+
+            var url = '../api/logs?domainId='+this.domainId+
+                    '&twStart=' + encodeURIComponent(this.twStart) + '&twEnd=' + encodeURIComponent(this.twEnd);
+            if(this.keyName){
+                url+='&keyName=' + encodeURIComponent(this.keyName);
+            }
+            if(this.keyValue){
+                url+='&keyValue=' + encodeURIComponent(this.keyValue);
+            }
+            
+            url+='&page=' + pageNo + '&limit=' + this.limit;
+            window.fetch(url).then((response)=>{                        
+                response.json().then((parsedJson)=>{                        
+                    self.logData = parsedJson.data;
+                    self.hasMoreResults = parsedJson.hasMoreResults;                    
+                    SBO_ShowElem(this.elemId);                    
+                });                        
+            });
+        },
+    },
+    mounted: function () {
+    },
+    template: `
+<div class="mt-2" v-bind:id="elemId">
+    <div v-if="logData && logData.length>0" class="card">
+        <div class="card-body">
+            <div class="d-flex flex-row justify-content-between">
+                <h6 class="text-nowrap">{{ title }}</h6>
+            </div>
+            <div class="table-responsive">
+            <table class="table table-sm small table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Time</th>
+                        <th>Client IP</th>
+                        <th>User</th>
+                        <th>Method</th>
+                        <th>Status</th>
+                        <th>Bytes Sent</th>
+                        <th>Request URI</th>
+                        <th>User agent</th>
+                        <th>Referer</th>
+                    </tr>                                
+                </thead>
+                <tbody>
+                    <tr v-for="(row, index) in logData">
+                        <td v-if="row">{{ row.requestTimestamp }}</td>
+                        <td v-if="row">{{ row.clientIP }}</td>
+                        <td v-if="row">{{ row.remoteUser }}</td>
+                        <td v-if="row">{{ row.method }}</td>
+                        <td v-if="row">{{ row.statusCode }}</td>
+                        <td v-if="row">{{ row.bytesSent }}</td>
+                        <td v-if="row">{{ row.requestUri }}</td>
+                        <td v-if="row">{{ row.uaString }}</td>
+                        <td v-if="row">{{ row.referer }}</td>
+                    </tr>
+                </tbody>                    
+            </table>
+            </div>
+            <div>
+                Page: {{ page }}
+                <button title="Previous page" class="btn btn-sm btn-link" v-if="page>1" v-on:click="goToPage(page-1)">
+                    <i class="bi bi-skip-backward"></i>
+                </button>
+                <button title="Next page" class="btn btn-sm btn-link" v-if="hasMoreResults" v-on:click="goToPage(page+1)">
+                    <i class="bi bi-skip-forward"></i>
+                </button>
+            </div>
+            <!--div v-if="keyValue">Showing results for {{ keyName }} = {{ keyValue }}. <button v-on:click="removeKeyValueFilter()" class="btn btn-sm btn-link">Show all</button> </div-->
+        </div>
+    </div>
+</div>`
 };

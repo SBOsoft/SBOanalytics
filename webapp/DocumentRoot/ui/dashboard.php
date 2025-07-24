@@ -22,27 +22,7 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
     exit;
 }
 ?>
-    <div id="app">
-        <nav class="navbar navbar-expand-lg sbo-nav shadow-sm" data-bs-theme="dark">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="#">SBO Analytics</a>                
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav ms-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" href="https://github.com/SBOsoft/SBOanalytics" title="SBOanalytics github repository">
-                                <i class="bi bi-github"></i>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="https://www.sbosoft.net">SBOSOFT</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
+    <div id="app">        
         <div class="text-center px-4 py-2 border-bottom bg-primary-subtle">
             <form action="" class="form form-sm" onsubmit="return false;">
                 <div class="row align-items-center">
@@ -80,7 +60,7 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                     </div>
                     <div class="col-6 col-md-4 col-lg-auto my-1 row">
                         <div class="col-auto">
-                        <button class="btn btn-primary" v-on:click="loadCharts" type="button">Show Analytics</button>
+                        <button class="btn btn-primary" v-on:click="loadCharts" type="button">Show Metrics</button>
                         </div>
                     </div>
                 </div>
@@ -167,12 +147,12 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
             // Data properties for the component
             data() {
                 return {                    
-                    allDomains:[],
+                    allDomains:{},
                     domainId: 0,
                     error: 'Select domain and period and click Show Analytics to start',
                     twStartStr:'<?php 
-                        $lastWeek = strtotime("-1 week");
-                        echo date('Y-m-d', $lastWeek).'T00:00';
+                        $yesterday = strtotime("-1 day");
+                        echo date('Y-m-d', $yesterday).'T00:00';
                     ?>',
                     twEndStr:'<?php echo date('Y-m-d').'T'.date('h:i');?>',
                     groupBy:'day'
@@ -215,23 +195,26 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                     var self = this;
                     window.fetch('../api/domains').then((response)=>{
                         response.json().then((parsedJson)=>{
-                            self.allDomains = parsedJson;
+                            self.allDomains = {};
+                            for(let i in parsedJson){
+                                self.allDomains[parsedJson[i].domainId] = parsedJson[i];
+                            }
                         });
                     });
                 },
                 chartClicked(chartType, chartId, clickParams){
                     switch(chartId){
                         case 'statusCodesPieChart':
-                            this.$refs.statusCodesDetailedMetrics.initParams(this.domainId, 3, clickParams.name, this.twStart, this.twEnd, 20, 'Status code:' + clickParams.name);
+                            this.$refs.statusCodesDetailedMetrics.initParams(this.domainId, 3, clickParams.name, this.twStart, this.twEnd, 20, 'Status code:' + clickParams.name, this.allDomains);
                             this.$refs.statusCodesDetailedMetrics.goToPage(1, this.groupBy);
                             break;
                         case 'httpMethodsPieChart':
-                            this.$refs.httpMethodsDetailedMetrics.initParams(this.domainId, 5, clickParams.name, this.twStart, this.twEnd, 20, 'Method:' + clickParams.name);
+                            this.$refs.httpMethodsDetailedMetrics.initParams(this.domainId, 5, clickParams.name, this.twStart, this.twEnd, 20, 'Method:' + clickParams.name, this.allDomains);
                             this.$refs.httpMethodsDetailedMetrics.goToPage(1, this.groupBy);
                             
                             break;
                         case 'referersPieChart':                            
-                            this.$refs.referersDetailedMetrics.initParams(this.domainId, 6, clickParams.name, this.twStart, this.twEnd, 20, 'Referer:' + clickParams.name);
+                            this.$refs.referersDetailedMetrics.initParams(this.domainId, 6, clickParams.name, this.twStart, this.twEnd, 20, 'Referer:' + clickParams.name, this.allDomains);
                             this.$refs.referersDetailedMetrics.goToPage(1, this.groupBy);                            
                             break;
                         /*
@@ -241,28 +224,28 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                             break;
                         */
                         case 'pathsBarChart':                            
-                            this.$refs.pathsDetailedMetrics.initParams(this.domainId, 7, clickParams.name, this.twStart, this.twEnd, 20, 'Path:' + clickParams.name);
+                            this.$refs.pathsDetailedMetrics.initParams(this.domainId, 7, clickParams.name, this.twStart, this.twEnd, 20, 'Path:' + clickParams.name, this.allDomains);
                             this.$refs.pathsDetailedMetrics.goToPage(1, this.groupBy);
                             break;
                             
                         case 'uaFamilyPieChart':
-                            this.$refs.uaFamilyDetailedMetrics.initParams(this.domainId, 11, clickParams.name, this.twStart, this.twEnd, 20, 'User agent:' + clickParams.name);
+                            this.$refs.uaFamilyDetailedMetrics.initParams(this.domainId, 11, clickParams.name, this.twStart, this.twEnd, 20, 'User agent:' + clickParams.name, this.allDomains);
                             this.$refs.uaFamilyDetailedMetrics.goToPage(1, this.groupBy);
                             break;
                         case 'osFamilyPieChart':
-                            this.$refs.osFamilyDetailedMetrics.initParams(this.domainId, 12, clickParams.name, this.twStart, this.twEnd, 20, 'OS:' + clickParams.name);
+                            this.$refs.osFamilyDetailedMetrics.initParams(this.domainId, 12, clickParams.name, this.twStart, this.twEnd, 20, 'OS:' + clickParams.name, this.allDomains);
                             this.$refs.osFamilyDetailedMetrics.goToPage(1, this.groupBy);
                             break;
                         case 'deviceTypePieChart':
-                            this.$refs.deviceTypesDetailedMetrics.initParams(this.domainId, 13, clickParams.name, this.twStart, this.twEnd, 20, 'Device:' + clickParams.name);
+                            this.$refs.deviceTypesDetailedMetrics.initParams(this.domainId, 13, clickParams.name, this.twStart, this.twEnd, 20, 'Device:' + clickParams.name, this.allDomains);
                             this.$refs.deviceTypesDetailedMetrics.goToPage(1, this.groupBy);
                             break;
                         case 'isHumanPieChart':
-                            this.$refs.isHumanDetailedMetrics.initParams(this.domainId, 14, clickParams.name, this.twStart, this.twEnd, 20, 'Human:' + clickParams.name);
+                            this.$refs.isHumanDetailedMetrics.initParams(this.domainId, 14, clickParams.name, this.twStart, this.twEnd, 20, 'Human:' + clickParams.name, this.allDomains);
                             this.$refs.isHumanDetailedMetrics.goToPage(1, this.groupBy);
                             break;
                         case 'requestIntentPieChart':
-                            this.$refs.intentsDetailedMetrics.initParams(this.domainId, 15, clickParams.name, this.twStart, this.twEnd, 20, 'Intent:' + clickParams.name);
+                            this.$refs.intentsDetailedMetrics.initParams(this.domainId, 15, clickParams.name, this.twStart, this.twEnd, 20, 'Intent:' + clickParams.name, this.allDomains);
                             this.$refs.intentsDetailedMetrics.goToPage(1, this.groupBy);
                             break;
                             
