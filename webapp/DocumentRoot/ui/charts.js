@@ -741,6 +741,23 @@ const SBOLogsView  = {
         calcRowNo(rowIndex){
             return (this.limit * (this.page-1)) + rowIndex + 1;
         },
+        getUAIcon(row){
+            if(row.uaFamily==='Script' || row.uaFamily.endsWith('Bot') || row.uaFamily==='Scanner'){
+                return '<i class="bi bi-robot text-warning me-1"></i>';
+            }
+            if(row.uaOS==='Windows'){
+                return '<i class="bi bi-windows text-primary me-1"></i>'
+            }
+            if(row.uaOS==='MacOS'){
+                return '<i class="bi bi-apple text-secondary me-1"></i>'
+            }
+            if(row.uaOS==='Android'){
+                return '<i class="bi bi-android2 text-success me-1"></i>'
+            }
+            if(row.uaOS==='IOS'){
+                return '<i class="bi bi-tablet text-info me-1"></i>'
+            }
+        },
         goToPage(pageNo, groupByParam){
             if(groupByParam){
                 this.groupBy = groupByParam;
@@ -782,20 +799,22 @@ const SBOLogsView  = {
                 <thead class="table-light">
                     <tr>
                         <th>#</th>
+                        <th></th>
                         <th>Time</th>
                         <th>Client IP</th>
                         <th>User</th>
                         <th>Method</th>
                         <th>Status</th>
                         <th>Bytes Sent</th>
-                        <th>Request URI</th>
+                        <th>Path</th>
                         <th>User agent</th>
                         <th>Referer</th>
                     </tr>                                
                 </thead>
                 <tbody>
-                    <tr v-for="(row, index) in logData">
+                    <tr v-for="(row, index) in logData" v-bind:class="{'sbo-status400':(row && row.statusCode>399 && row.statusCode<500)}">
                         <td v-if="row">{{ calcRowNo(index) }}</td>
+                        <td v-if="row"><span v-html="getUAIcon(row)"></span></td>
                         <td v-if="row">{{ row.requestTimestamp }}</td>
                         <td v-if="row">{{ row.clientIP }}</td>
                         <td v-if="row">{{ row.remoteUser }}</td>

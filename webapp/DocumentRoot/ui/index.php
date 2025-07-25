@@ -77,13 +77,16 @@ switch($action){
         .sbo-nav{
             background-color: #3c096c;
         }
+        .sbo-status400 td{
+            color:var(--bs-secondary) !important;
+        }
     </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg sbo-nav shadow-sm" data-bs-theme="dark">
             <div class="container-fluid">
                 <div class="text-light">
-                <a class="navbar-brand me-2" href="https://www.sbosoft.net/sboanalytics" target="_blank">SBO Analytics</a>
+                <a class="navbar-brand me-2" href="https://www.sbosoft.net/sboanalytics" target="_blank">SBOanalytics</a>
 
                 <a class="text-white me-2" href="dashboard" title="Metrics dashboard">Metrics</a>
 
@@ -124,5 +127,21 @@ switch($action){
             break;
     }
     ?>
+    <footer class="pt-4 my-md-5 pt-md-5 border-top border-primary-subtle">
+        <div class="container-fluid container-lg">
+            <div class="row">
+                <div class="col-12 col-md">
+                    <div class="my-2 text-center text-secondary">
+                        SBOanalytics by SBOSOFT.
+                        See 
+                        <a href="https://github.com/SBOsoft/SBOanalytics" title="SBOanalytics (frontend) at github"><i class="bi bi-github"></i> SBOanalytics</a>
+                        and
+                        <a href="https://github.com/SBOsoft/SBOLogProcessor" title="Log processor (backend) at github"><i class="bi bi-github"></i> SBOLogProcessor</a>
+                        for latest updates and documentation
+                    </div>                   
+                </div>                
+            </div>
+        </div>
+    </footer>
 </body>
 </html>

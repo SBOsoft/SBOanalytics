@@ -149,7 +149,7 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                 return {                    
                     allDomains:{},
                     domainId: 0,
-                    error: 'Select domain and period and click Show Analytics to start',
+                    error: 'Select domain and period and click Show Metrics to start',
                     twStartStr:'<?php 
                         $yesterday = strtotime("-1 day");
                         echo date('Y-m-d', $yesterday).'T00:00';

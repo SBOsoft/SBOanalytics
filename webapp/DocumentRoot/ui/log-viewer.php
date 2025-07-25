@@ -78,8 +78,15 @@ $twEndTS = filter_input(INPUT_GET, 'twEndTS', FILTER_VALIDATE_REGEXP, array('def
         <div v-if="error" class="alert alert-danger text-center mx-auto my-5" style="max-width: 600px;" role="alert">
             {{ error }}
         </div>
-        <sbo-logsview ref="logsView" elem-id="sboRawLogsView"></sbo-logsview>
-        <div class="text-secondary small my-2">Please note that depending on your configuration, some logs might not have been saved which may lead to differences between metrics and number of log entries displayed on this page</div>
+        <div style="min-height:30vh;">
+            <sbo-logsview ref="logsView" elem-id="sboRawLogsView"></sbo-logsview>
+        </div>
+        <div class="text-secondary small my-2">
+            <ul>
+                <li>Please note that depending on your configuration, some logs might not have been saved which may lead to differences between metrics and number of log entries displayed on this page</li>
+                <li>Only the first 100 characters of user agent and paths are saved</li>
+            </ul>
+        </div>
     </div>        
 </div>
 
