@@ -135,6 +135,65 @@ function SBO_FormatTimeWindow(twNumeric, detailedLogs, indexInLogsArray){
     return rv + ':' + i;                    
 }
 
+function SBO_GetLogsLink(domainId, tw, groupBy, timeWindowSizeMinutes, metricType, keyValue){
+    var link ='logs?domainId=' + encodeURIComponent(domainId);
+    //calculate tw start end row.tw is numeric timewindo value and this.timeWindowSizeMinutes is the size
+    //if this.groupBy is empty then use timeWindowSizeMinutes, otherwise use this.groupBy to calculate start - end times
+    let startDt = SBO_TimeWindowToDate(tw);
+    let startTwTS = SBO_FormatDateAsTS(startDt);
+    link+='&twStartTS=' + encodeURIComponent(startTwTS);
+    switch(groupBy){
+        case 'hour':
+            startDt.setHours(startDt.getHours() + 1);
+            break;
+        case 'day':
+            startDt.setDate(startDt.getDate() + 1);
+            break;
+        case 'month':
+            startDt.setMonth(startDt.getMonth() + 1);
+            break;
+        default:
+            startDt.setMinutes(startDt.getMinutes() + timeWindowSizeMinutes);
+            break;                    
+    }
+    link+='&twEndTS=' + encodeURIComponent(SBO_FormatDateAsTS(startDt));
+    switch(metricType){
+        case 3:
+            link+='&keyName=statusCode';
+            break;
+        case 4:
+            link+='&keyName=clientIP';
+            break;
+        case 5:
+            link+='&keyName=method';
+            break;
+        case 6:
+            link+='&keyName=referer';
+            break;
+        case 7:
+            link+='&keyName=basePath';
+            break;
+        case 11:
+            link+='&keyName=uaFamily';
+            break;
+        case 12:
+            link+='&keyName=uaOS';
+            break;
+        case 13:
+            link+='&keyName=deviceType';
+            break;
+        case 14:
+            link+='&keyName=isHuman';
+            break;
+        case 15:
+            link+='&keyName=requestIntent';
+            break;
+    }
+    link+='&keyValue=' + encodeURIComponent(keyValue);
+
+    return link;
+}
+
 const SBOBarChart  = {
     props:{
         targetElementId : String,
@@ -163,11 +222,30 @@ const SBOBarChart  = {
             let elem = document.getElementById(this.targetElementId);
             elem.innerText='Error loading chart:' + errMsg;
         },
-        showChart(chartData){
-            if(this.vertical){
-                chartData.values.reverse();
-                chartData.legends.reverse();
+        showChart(chartDataParam){
+            let valValues = [];
+            let catValues = [];
+            let cd = [];
+            if(!Array.isArray(chartDataParam)){
+                valValues = chartDataParam.values;
+                catValues = chartDataParam.legends;
+                for(let i =0; i<valValues.length; i++){
+                    cd.push(valValues[i]);
+                }
             }
+            else{
+                for(let x in chartDataParam){
+                    catValues.push(chartDataParam[x].name);
+                    valValues.push(chartDataParam[x].value);
+                }
+                cd = chartDataParam;
+            }
+            if(this.vertical){
+                catValues.reverse();
+                valValues.reverse();
+            }
+
+            
             const option = {
                 title: {
                     text: this.title,
@@ -178,11 +256,11 @@ const SBOBarChart  = {
                     }
                 },
                 tooltip: {
-                    trigger: 'axis',
+                    trigger: 'item',
                     axisPointer: {
                         type: 'shadow' // 'shadow' for bar charts, 'line' for line charts
                     },
-                    formatter: '{b}<br/>{a}: ${c}' // Custom tooltip format
+                    formatter: '{b}<br/>{a}: {c}' // Custom tooltip format
                 },
                 grid: {
                     left: '3%',
@@ -192,7 +270,7 @@ const SBOBarChart  = {
                 },
                 xAxis: {
                     type: this.vertical ? 'value':'category',
-                    data: this.vertical ? chartData.values: chartData.legends,
+                    data: this.vertical ? valValues : catValues,
                     axisLabel: {
                         rotate: this.vertical ? 0 : 45,
                         interval: 0
@@ -211,13 +289,13 @@ const SBOBarChart  = {
                     axisTick: {
                         alignWithLabel: true
                     },
-                    data: this.vertical ? chartData.legends : chartData.values
-                },
+                    data: this.vertical ? catValues : valValues
+                },                
                 series: [
                     {
                         name: this.seriesName,
                         type: 'bar',
-                        data: chartData.values,
+                        data: cd,
                         barMaxWidth: 30, 
                         itemStyle: this.vertical ? {
                             borderRadius: [0, 5, 5, 0],
@@ -476,62 +554,7 @@ const SBODetailedMetricsView  = {
             });
         },
         getLogsLink(row){
-            var link ='logs?domainId=' + encodeURIComponent(this.domainId);
-            //calculate tw start end row.tw is numeric timewindo value and this.timeWindowSizeMinutes is the size
-            //if this.groupBy is empty then use timeWindowSizeMinutes, otherwise use this.groupBy to calculate start - end times
-            let startDt = SBO_TimeWindowToDate(row.tw);
-            let startTwTS = SBO_FormatDateAsTS(startDt);
-            link+='&twStartTS=' + encodeURIComponent(startTwTS);
-            switch(this.groupBy){
-                case 'hour':
-                    startDt.setHours(startDt.getHours() + 1);
-                    break;
-                case 'day':
-                    startDt.setDate(startDt.getDate() + 1);
-                    break;
-                case 'month':
-                    startDt.setMonth(startDt.getMonth() + 1);
-                    break;
-                default:
-                    startDt.setMinutes(startDt.getMinutes() + this.timeWindowSizeMinutes);
-                    break;                    
-            }
-            link+='&twEndTS=' + encodeURIComponent(SBO_FormatDateAsTS(startDt));
-            switch(this.metricType){
-                case 3:
-                    link+='&keyName=statusCode';
-                    break;
-                case 4:
-                    link+='&keyName=clientIP';
-                    break;
-                case 5:
-                    link+='&keyName=method';
-                    break;
-                case 6:
-                    link+='&keyName=referer';
-                    break;
-                case 7:
-                    link+='&keyName=basePath';
-                    break;
-                case 11:
-                    link+='&keyName=uaFamily';
-                    break;
-                case 12:
-                    link+='&keyName=uaOS';
-                    break;
-                case 13:
-                    link+='&keyName=deviceType';
-                    break;
-                case 14:
-                    link+='&keyName=isHuman';
-                    break;
-                case 15:
-                    link+='&keyName=requestIntent';
-                    break;
-            }
-            link+='&keyValue=' + encodeURIComponent(row.keyValue);
-            console.log(link);
-            return link;
+            return SBO_GetLogsLink(this.domainId, row.tw, this.groupBy, this.timeWindowSizeMinutes, this.metricType, row.keyValue);            
         }
     },
     mounted: function () {
@@ -643,7 +666,7 @@ const SBOLineChart  = {
                             backgroundColor: '#6a7985'
                         }
                     },
-                    formatter: '{b}<br/>{a}: ${c}'
+                    formatter: '{b}<br/>{a}: {c}'
                 },
                 grid: {
                     left: '3%',

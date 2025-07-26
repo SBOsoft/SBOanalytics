@@ -84,17 +84,17 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
             <div class="row mt-2">
                 <div class="col-md-6 col-lg-6">
                     <sbo-piechart ref="statusCodesPieChart" target-element-id="statusCodesPieChart" title="Response status codes"  series-name="Status codes"></sbo-piechart>                    
-                    <sbo-details-metrics ref="statusCodesDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="statusCodesDetailedMetrics"></sbo-details-metrics>
+                    <sbo-details-metrics v-if="loadedCharts.statusCodesPieChart" ref="statusCodesDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="statusCodesDetailedMetrics"></sbo-details-metrics>
                 </div>
                 <div class="col-md-6 col-lg-6">
                     <sbo-piechart ref="httpMethodsPieChart" target-element-id="httpMethodsPieChart" title="Http methods"  series-name="Http methods"></sbo-piechart>                    
-                    <sbo-details-metrics ref="httpMethodsDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="httpMethodsDetailedMetrics"></sbo-details-metrics>
+                    <sbo-details-metrics v-if="loadedCharts.httpMethodsPieChart" ref="httpMethodsDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="httpMethodsDetailedMetrics"></sbo-details-metrics>
                 </div>
             </div>
             <div class="row mt-2">                
                 <div class="col-md-6 col-lg-6">
                     <sbo-piechart ref="referersPieChart" target-element-id="referersPieChart" title="Top referers"  series-name="Referers" v-bind:hide-legends="true"></sbo-piechart>                    
-                    <sbo-details-metrics ref="referersDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="referersDetailedMetrics"></sbo-details-metrics>
+                    <sbo-details-metrics v-if="loadedCharts.referersPieChart" ref="referersDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="referersDetailedMetrics"></sbo-details-metrics>
                 </div>
                 <!--
                 <div class="col-md-6 col-lg-6">
@@ -104,33 +104,33 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                 -->
                 <div class="col-md-6 col-lg-6">
                     <sbo-barchart ref="pathsBarChart" target-element-id="pathsBarChart" title="Top paths"  series-name="Paths" v-bind:hide-legends="false" v-bind:vertical="true"></sbo-barchart>
-                    <sbo-details-metrics ref="pathsDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="pathsDetailedMetrics"></sbo-details-metrics>
+                    <sbo-details-metrics v-if="loadedCharts.pathsBarChart" ref="pathsDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="pathsDetailedMetrics"></sbo-details-metrics>
                 </div>
             </div>
             <div class="row mt-2">                
                 <div class="col-md-6 col-lg-6">
                     <sbo-piechart ref="uaFamilyPieChart" target-element-id="uaFamilyPieChart" title="User agents"  series-name="User agents" v-bind:hide-legends="true"></sbo-piechart>
-                    <sbo-details-metrics ref="uaFamilyDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="uaFamilyDetailedMetrics"></sbo-details-metrics>
+                    <sbo-details-metrics v-if="loadedCharts.uaFamilyPieChart" ref="uaFamilyDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="uaFamilyDetailedMetrics"></sbo-details-metrics>
                 </div>
                 <div class="col-md-6 col-lg-6">
                     <sbo-piechart ref="osFamilyPieChart" target-element-id="osFamilyPieChart" title="Operating systems"  series-name="Operating systems" v-bind:hide-legends="true"></sbo-piechart>
-                    <sbo-details-metrics ref="osFamilyDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="osFamilyDetailedMetrics"></sbo-details-metrics>
+                    <sbo-details-metrics v-if="loadedCharts.osFamilyPieChart" ref="osFamilyDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="osFamilyDetailedMetrics"></sbo-details-metrics>
                 </div>
             </div>
             <div class="row mt-2">                
                 <div class="col-md-6 col-lg-6">
                     <sbo-piechart ref="deviceTypePieChart" target-element-id="deviceTypePieChart" title="Device types"  series-name="Device types" v-bind:hide-legends="true"></sbo-piechart>
-                    <sbo-details-metrics ref="deviceTypesDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="deviceTypesDetailedMetrics"></sbo-details-metrics>
+                    <sbo-details-metrics v-if="loadedCharts.deviceTypePieChart" ref="deviceTypesDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="deviceTypesDetailedMetrics"></sbo-details-metrics>
                 </div>                
                 <div class="col-md-6 col-lg-6">
                     <sbo-piechart ref="isHumanPieChart" target-element-id="isHumanPieChart" title="Client types"  series-name="Client types" v-bind:hide-legends="false"></sbo-piechart>
-                    <sbo-details-metrics ref="isHumanDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="isHumanDetailedMetrics"></sbo-details-metrics>
+                    <sbo-details-metrics v-if="loadedCharts.isHumanPieChart" ref="isHumanDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="isHumanDetailedMetrics"></sbo-details-metrics>
                 </div>
             </div>
             <div class="row mt-2">                
                 <div class="col-md-6 col-lg-6">
                     <sbo-piechart ref="requestIntentPieChart" target-element-id="requestIntentPieChart" title="Request intents"  series-name="Request intents" v-bind:hide-legends="false"></sbo-piechart>
-                    <sbo-details-metrics ref="intentsDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="intentsDetailedMetrics"></sbo-details-metrics>
+                    <sbo-details-metrics v-if="loadedCharts.requestIntentPieChart" ref="intentsDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="intentsDetailedMetrics"></sbo-details-metrics>
                 </div>
             </div>            
         </div>        
@@ -155,7 +155,8 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                         echo date('Y-m-d', $yesterday).'T00:00';
                     ?>',
                     twEndStr:'<?php echo date('Y-m-d').'T'.date('h:i');?>',
-                    groupBy:'day'
+                    groupBy:'day',
+                    loadedCharts: {}
                 };
             },
             mounted() {
@@ -175,6 +176,7 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
             methods: {
                 loadCharts(){
                     this.error = '';
+                    this.loadedCharts = {};
                     this.loadTotalRequestsData();
                     this.loadBytesSentData();
                     this.loadRequestsByStatusCodesData();
@@ -204,6 +206,14 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                 },
                 chartClicked(chartType, chartId, clickParams){
                     switch(chartId){
+                        case 'totalRequestsBarChart':
+                            let totalReqsLogsLink = SBO_GetLogsLink(this.domainId, clickParams.data.timeWindow, this.groupBy, this.allDomains[this.domainId].timeWindowSizeMinutes, 1, '');
+                            window.open(totalReqsLogsLink, '_blank');
+                            break;
+                        case 'bytesSentBarChart':
+                            let bytesSentLogsLink = SBO_GetLogsLink(this.domainId, clickParams.data.timeWindow, this.groupBy, allDomains[this.domainId].timeWindowSizeMinutes, 2, '');
+                            window.open(bytesSentLogsLink, '_blank');
+                            break;
                         case 'statusCodesPieChart':
                             this.$refs.statusCodesDetailedMetrics.initParams(this.domainId, 3, clickParams.name, this.twStart, this.twEnd, 20, 'Status code:' + clickParams.name, this.allDomains);
                             this.$refs.statusCodesDetailedMetrics.goToPage(1, this.groupBy);
@@ -267,23 +277,23 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                             '&groupBy=' + encodeURIComponent(this.groupBy);
                     window.fetch(url).then((response)=>{                        
                         response.json().then((parsedJson)=>{
-                            let chartData = {
-                                legends:[],
-                                values:[]
-                            };
+                            let chartData = [];
                             for(let rowIndex in parsedJson.data){
                                 if(!parsedJson.data[rowIndex]){
                                     continue;
                                 }
-                                chartData.values.push(parsedJson.data[rowIndex].metric);
-                                chartData.legends.push(SBO_FormatTimeWindow(parsedJson.data[rowIndex].tw, parsedJson.data, rowIndex));
+                                chartData.push({
+                                    value:parseInt(parsedJson.data[rowIndex].metric),
+                                    name:SBO_FormatTimeWindow(parsedJson.data[rowIndex].tw, parsedJson.data, rowIndex),
+                                    timeWindow: parsedJson.data[rowIndex].tw
+                                });
                             }                            
                             self.$refs[chartId].showChart(chartData);
                             self.$refs[chartId].chartObj.on('click', (clickParams)=>{
                                 self.chartClicked('bar', chartId, clickParams);
                             });
                         });
-                        
+
                     });
                 },
                 loadRequestsByHttpMethodsData(){
@@ -340,6 +350,7 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                             self.$refs[chartId].chartObj.on('click', (clickParams)=>{
                                 self.chartClicked('pie', chartId, clickParams);
                             });
+                            self.loadedCharts[chartId] = true;
                         });
                         
                     });                    
