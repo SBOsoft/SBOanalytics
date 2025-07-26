@@ -26,6 +26,7 @@ jobs:
           # Navigate into the DocumentRoot itself
           cd "$SOURCE_PATH"
 
+          echo "${{ github.event.inputs.release_name }}" > version.txt
           #copy license 
           cp ../../LICENSE ./
           
