@@ -132,7 +132,16 @@ switch($action){
             <div class="row">
                 <div class="col-12 col-md">
                     <div class="my-2 text-center text-secondary">
-                        SBOanalytics by SBOSOFT.
+                        SBOanalytics by 
+                        <a href="https://www.sbosoft.net/" target="_blank" rel="noopener">SBOSOFT</a>. 
+                        <?php
+                        if(file_exists('../version.txt')){
+                            $versionStr = file_get_contents('../version.txt');
+                            echo ' Version: ';
+                            echo SBO_HtmlEncode($versionStr);
+                        }
+                        ?>
+                        <br>
                         See 
                         <a href="https://github.com/SBOsoft/SBOanalytics" title="SBOanalytics (frontend) at github"><i class="bi bi-github"></i> SBOanalytics</a>
                         and
