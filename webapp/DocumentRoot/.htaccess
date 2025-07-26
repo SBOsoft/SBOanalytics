@@ -22,6 +22,14 @@ RewriteRule ui/dashboard  ui/index.php?act=dashboard [L,QSA]
 RewriteCond %{REQUEST_URI} ui/logs$
 RewriteRule ui/logs  ui/index.php?act=logs [L,QSA]
 
+#block access to license and version files and similar
+RewriteCond %{REQUEST_URI} /LICENSE$
+RewriteRule LICENSE  - [R=404,L]
+
+RewriteCond %{REQUEST_URI} /version.txt$
+RewriteRule version.txt   - [R=404,L]
+
+
 #You can set environment variables here or in virtual host config
 
 #Authentication type. REQUIRED. Supported values: none, single (more to be added later)
