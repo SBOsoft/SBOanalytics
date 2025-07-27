@@ -211,7 +211,7 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                             window.open(totalReqsLogsLink, '_blank');
                             break;
                         case 'bytesSentBarChart':
-                            let bytesSentLogsLink = SBO_GetLogsLink(this.domainId, clickParams.data.timeWindow, this.groupBy, allDomains[this.domainId].timeWindowSizeMinutes, 2, '');
+                            let bytesSentLogsLink = SBO_GetLogsLink(this.domainId, clickParams.data.timeWindow, this.groupBy, this.allDomains[this.domainId].timeWindowSizeMinutes, 2, '');
                             window.open(bytesSentLogsLink, '_blank');
                             break;
                         case 'statusCodesPieChart':
