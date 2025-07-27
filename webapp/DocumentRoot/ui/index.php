@@ -86,7 +86,7 @@ switch($action){
     <nav class="navbar navbar-expand-lg sbo-nav shadow-sm" data-bs-theme="dark">
             <div class="container-fluid">
                 <div class="text-light">
-                <a class="navbar-brand me-2" href="https://www.sbosoft.net/sboanalytics" target="_blank">SBOanalytics</a>
+                <a class="navbar-brand me-2" href="https://www.sbosoft.net/sboanalytics.html" title="SBOanalytics free web server analytics" target="_blank">SBOanalytics</a>
 
                 <a class="text-white me-2" href="dashboard" title="Metrics dashboard">Metrics</a>
 
