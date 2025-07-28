@@ -240,11 +240,6 @@ const SBOBarChart  = {
                 }
                 cd = chartDataParam;
             }
-            if(this.vertical){
-                catValues.reverse();
-                valValues.reverse();
-            }
-
             
             const option = {
                 title: {
@@ -260,7 +255,7 @@ const SBOBarChart  = {
                     axisPointer: {
                         type: 'shadow' // 'shadow' for bar charts, 'line' for line charts
                     },
-                    formatter: '{b}<br/>{a}: {c}' // Custom tooltip format
+                    formatter: this.vertical ? '{b}: {c}' : '{b}<br/>{a}: {c}'
                 },
                 grid: {
                     left: '3%',

@@ -103,7 +103,7 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                 </div>
                 -->
                 <div class="col-md-6 col-lg-6">
-                    <sbo-barchart ref="pathsBarChart" target-element-id="pathsBarChart" title="Top paths"  series-name="Paths" v-bind:hide-legends="false" v-bind:vertical="true"></sbo-barchart>
+                    <sbo-barchart ref="pathsBarChart" target-element-id="pathsBarChart" title="Top paths"  series-name="Path" v-bind:hide-legends="false" v-bind:vertical="true"></sbo-barchart>
                     <sbo-details-metrics v-if="loadedCharts.pathsBarChart" ref="pathsDetailedMetrics" v-bind:show-key-value-prop="false" elem-id="pathsDetailedMetrics"></sbo-details-metrics>
                 </div>
             </div>
