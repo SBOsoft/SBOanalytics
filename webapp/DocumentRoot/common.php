@@ -86,6 +86,21 @@ function SBO_CheckIsAuthenticated($isApi){
     }
 }
 
+function SBO_CheckIfUserIsAdmin(){
+    if(empty($_SESSION['adminSecretVerified']) ||  $_SESSION['adminSecretVerified']!=='yes'){
+        SBO_API_Error_Response(401, 'Authorization required', 'You are not authorized to access to this endpoint');
+        exit;
+    }
+}
+
+function SBO_CheckAdminCSRF(){
+    $csrfToken = filter_input(INPUT_POST, 'csrfToken', FILTER_VALIDATE_REGEXP, array('default' => null, 'options' => array('regexp' => '/^([a-zA-Z0-9]+)$/')));
+    if(($_SESSION['adminCSRFToken'] ?? '')!==$csrfToken){
+        SBO_API_Error_Response(400, 'Bad request', 'Invalid CSRF token');
+        exit;
+    }
+}
+
 function SBO_PrintQueryResultRowAsJson($row){
     echo json_encode($row);
 }
@@ -181,5 +196,26 @@ function SBO_DB_Query($sql, $params, $limit, &$hasMore, $callbackFunction = null
     else{
         return false;
     }
+    
+}
+
+function SBO_DB_InsertUpdateDelete($sql, $params, $returnLastInsertId=false){
+    global $SBO_DB_PDO_INSTANCE;
+    if($SBO_DB_PDO_INSTANCE === null){
+        SBO_DB_Connect();
+    }
+    if($SBO_DB_PDO_INSTANCE === false){
+        return false;
+    }
+    
+    $stmt = $SBO_DB_PDO_INSTANCE->prepare($sql);
+    if($stmt->execute($params)){
+        if($returnLastInsertId){
+            return $SBO_DB_PDO_INSTANCE->lastInsertId();
+        }
+        return true;
+    }
+    
+    return false;
     
 }

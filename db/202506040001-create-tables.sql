@@ -1,4 +1,3 @@
-USE sboanalytics;
 
 CREATE TABLE sbo_domains (
     domain_id INT AUTO_INCREMENT,

@@ -7,3 +7,6 @@ CREATE DATABASE sboanalytics
 CREATE USER 'sboanalytics'@'localhost' IDENTIFIED BY 'PUT_A_STRONG_PASSWORD_HERE';
 GRANT ALL ON sboanalytics.* TO 'sboanalytics'@'localhost';
 */
+
+
+USE sboanalytics;

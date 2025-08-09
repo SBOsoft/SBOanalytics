@@ -9,6 +9,18 @@ RewriteRule api/domains  api/index.php?act=domains [L,QSA]
 RewriteCond %{REQUEST_URI} api/logs$
 RewriteRule api/logs  api/index.php?act=logs [L,QSA]
 
+RewriteCond %{REQUEST_URI} api/os-metrics$
+RewriteRule api/os-metrics  api/index.php?act=os-metrics [L,QSA]
+
+RewriteCond %{REQUEST_URI} api/hosts$
+RewriteRule api/hosts  api/index.php?act=hosts [L,QSA]
+
+RewriteCond %{REQUEST_URI} api/admin-domain-save$
+RewriteRule api/admin-domain-save  api/index.php?act=admin-domain-save [L,QSA]
+
+RewriteCond %{REQUEST_URI} api/admin-host-save$
+RewriteRule api/admin-host-save  api/index.php?act=admin-host-save [L,QSA]
+
 RewriteCond %{REQUEST_URI} ui/auth-form$
 RewriteRule ui/auth-form  ui/index.php?act=auth-form [L,QSA]
 
@@ -19,8 +31,14 @@ RewriteRule ui/auth-submit  ui/index.php?act=auth-submit [L,QSA]
 RewriteCond %{REQUEST_URI} ui/dashboard$
 RewriteRule ui/dashboard  ui/index.php?act=dashboard [L,QSA]
 
+RewriteCond %{REQUEST_URI} ui/os-metrics$
+RewriteRule ui/os-metrics  ui/index.php?act=os-metrics [L,QSA]
+
 RewriteCond %{REQUEST_URI} ui/logs$
 RewriteRule ui/logs  ui/index.php?act=logs [L,QSA]
+
+RewriteCond %{REQUEST_URI} ui/settings$
+RewriteRule ui/settings  ui/index.php?act=settings [L,QSA]
 
 #block access to license and version files and similar
 RewriteCond %{REQUEST_URI} /LICENSE$
@@ -49,3 +67,6 @@ RewriteRule version.txt   - [R=404,L]
 #SetEnv SBO_AUTH_SINGLE_USER someusername
 #Password to be used when SBO_AUTH_TYPE is single. REQUIRED when SBO_AUTH_TYPE is single
 #SetEnv SBO_AUTH_SINGLE_PWD  "PUT_A_STRONG_PASSWORD_HERE_IF_YOU_WILL_USE_IT"
+
+#Password/secret required to access administrative functions/pages
+#SetEnv SBO_ADMIN_SECRET  "PUT_A_STRONG_PASSWORD_HERE"

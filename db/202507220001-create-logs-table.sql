@@ -1,4 +1,3 @@
-USE sboanalytics;
 
 CREATE TABLE sbo_rawlogs (
     domain_id int not null,

@@ -610,7 +610,8 @@ const SBOLineChart  = {
         seriesName: String,
         lineColor: String,
         hoverColor: String,
-        noBorder: Boolean
+        noBorder: Boolean,
+        hideLegends: Boolean
     },
     data: function() {
         return {
@@ -660,8 +661,14 @@ const SBOLineChart  = {
                         label: {
                             backgroundColor: '#6a7985'
                         }
-                    },
+                    },                    
                     formatter: '{b}<br/>{a}: {c}'
+                },
+                legend: {
+                    show: !this.hideLegends,
+                    orient: 'horizontal',
+                    bottom: '10',
+                    data: Array.isArray(chartData.legends) ? chartData.legends : null
                 },
                 grid: {
                     left: '3%',
@@ -672,10 +679,10 @@ const SBOLineChart  = {
                 xAxis: {
                     type: 'category',
                     boundaryGap: false,
-                    data: chartData.xLabels,
+                    //data: chartData.xLabels,    //might be updated below
                     axisLabel: {
                         rotate: 45,
-                        interval: 0
+                        //interval: 0
                     },
                     axisTick: {
                         alignWithLabel: true
@@ -687,8 +694,10 @@ const SBOLineChart  = {
                     axisLabel: {
                         formatter: '{value}'
                     }
-                },
-                series: [
+                },               
+            };
+            if(Array.isArray(chartData.values)){
+                option.series = [
                     {
                         name: this.seriesName,
                         type: 'line',
@@ -701,8 +710,38 @@ const SBOLineChart  = {
                             focus: 'series'
                         }
                     }
-                ]
-            };
+                ];
+                option.xAxis.data = chartData.xLabels;
+            }
+            else{
+                let seriesObjects = [];
+                let xLabels = [];
+                let i = 0;
+                for(let serieName in chartData){
+                    seriesObjects.push({
+                        name: serieName,
+                        type: 'line',
+                        data: chartData[serieName],
+                        smooth: false,
+                        showSymbol:false,
+                        coordinateSystem: 'cartesian2d',
+                        itemStyle: {
+                            color: sboChartBgColors[i] || '#7209b7',                            
+                        },
+                        emphasis: {
+                            focus: 'series'
+                        }
+                    });
+                    if(i==0){
+                        for(let j in chartData[serieName]){
+                            xLabels.push(chartData[serieName][j].name);
+                        }
+                    }
+                    i++;
+                }
+                option.series = seriesObjects;
+                option.xAxis.data = xLabels;
+            }
             this.chartObj.setOption(option);
         }
     },
@@ -711,7 +750,7 @@ const SBOLineChart  = {
     },
     template: `
     <div> 
-        <div class="{'card h-100 position-relative':!noBorder, 'card h-100 position-relative border-0':noBorder}">
+        <div v-bind:class="{'card h-100 position-relative':!noBorder, 'card h-100 position-relative border-0':noBorder}">
             <div class="card-body d-flex align-items-center justify-content-center">
                 <div class="sbo-bar-chart" :id="targetElementId"></div>
             </div>

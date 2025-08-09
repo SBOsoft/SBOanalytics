@@ -39,6 +39,13 @@ switch($action){
         $pageTitle='Log viewer';
         
         break;
+    case 'os-metrics':
+        $pageTitle='Operating system metrics';
+        
+        break;
+    case 'settings':
+        $pageTitle='SBOanalytics settings and administration';
+        break;
     case 'dashboard':
     default:
         $pageTitle='Metrics Dashboard';
@@ -54,8 +61,8 @@ switch($action){
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.5.13/vue.global.prod.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.6.0/echarts.min.js" integrity="sha512-XSmbX3mhrD2ix5fXPTRQb2FwK22sRMVQTpBP2ac8hX7Dh/605hA2QDegVWiAvZPiXIxOV0CbkmUjGionDpbCmw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/6.0.0/echarts.min.js" integrity="sha512-4/g9GAdOdTpUP2mKClpKsEzaK7FQNgMjq+No0rX8XZlfrCGtbi4r+T/p5fnacsEC3zIAmHKLJUL7sh3/yVA4OQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="charts.js"></script>
     <style>
         body {
@@ -88,10 +95,14 @@ switch($action){
                 <div class="text-light">
                 <a class="navbar-brand me-2" href="https://www.sbosoft.net/sboanalytics.html" title="SBOanalytics free web server analytics" target="_blank">SBOanalytics</a>
 
-                <a class="text-white me-2" href="dashboard" title="Metrics dashboard">Metrics</a>
+                <a class="text-white me-2" href="dashboard" title="Metrics dashboard">Requests</a>
+                
+                <a class="text-white me-2" href="logs" title="Log viewer">Logs</a>
 
-                <a class="text-white" href="logs" title="Log viewer">Logs</a>
+                <a class="text-white me-2" href="os-metrics" title="Operating system metrics">Hosts</a>
 
+                <a class="text-white me-2" href="settings" title="SBOanalytics settings">Settings</a>
+                
                 </div>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -121,6 +132,12 @@ switch($action){
         case 'logs':
             include('log-viewer.php');
             break;        
+        case 'os-metrics':
+            include('os-metrics.php');
+            break;
+        case 'settings':
+            include('settings.php');
+            break;
         case 'dashboard':
         default:
             include('dashboard.php');

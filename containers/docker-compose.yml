@@ -15,7 +15,7 @@ services:
     depends_on:
       - db              # Ensure DB is up before starting web
     networks:
-      - app-network
+      - sboanalytics-network
     env_file:
         ./web/variables.env
 
@@ -34,10 +34,10 @@ services:
       - ../db/:/docker-entrypoint-initdb.d  #init scripts
     #restart: no                     # change to always or unless-stopped for non-dev envs
     networks:
-      - app-network
+      - sboanalytics-network
 
 
 
 networks:
-  app-network:
+  sboanalytics-network:
     driver: bridge # Default bridge network for communication between services

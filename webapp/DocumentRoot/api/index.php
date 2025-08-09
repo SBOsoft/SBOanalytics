@@ -61,6 +61,22 @@ switch($action){
     case 'metrics':
         include('actions/metrics.php');
         break;
+    case 'hosts':
+        include('actions/hosts.php');
+        break;
+    case 'os-metrics':
+        include('actions/os-metrics.php');
+        break;
+    case 'admin-host-save':
+        SBO_CheckIfUserIsAdmin();
+        SBO_CheckAdminCSRF();
+        include('actions/admin-host-save.php');
+        break;
+    case 'admin-domain-save':
+        SBO_CheckIfUserIsAdmin();
+        SBO_CheckAdminCSRF();
+        include('actions/admin-domain-save.php');
+        break;
     default:
         SBO_API_Error_Response(400, 'Unknown action', 'Value of act parameter is not one of the expected values');        
         break;
