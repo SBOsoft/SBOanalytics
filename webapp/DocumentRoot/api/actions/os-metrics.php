@@ -72,7 +72,8 @@ $sqlAvgPart = 'ROUND(AVG(up_duration_minutes),2) as hostUptimeMinutes, '
             . 'ROUND(AVG(swap_use),2) as  swapUsed,'
             . 'ROUND(AVG(cache_use),2) as cacheUsed, '
             . 'ROUND(AVG(memory_use),2) as memoryUsed,'
-            . 'ROUND(AVG(memory_free),2) as memoryFree ';
+            . 'ROUND(AVG(memory_free),2) as memoryFree, '
+            . 'ROUND(AVG(memory_available),2) as memoryAvailable ';
 switch($groupBy){
     case 'hour':
         $sql.='  DATE(metrics_ts) as day, HOUR(metrics_ts) as hour, ';
