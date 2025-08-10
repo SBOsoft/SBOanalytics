@@ -34,21 +34,23 @@ if(($_SESSION['adminSecretVerified'] ?? '') !== 'yes'){
     }
     if($showAdminSecretForm){
 ?>
-<div class="alert alert-warning">
-    Enter admin secret to access this page
+<div class="container d-flex justify-content-center align-items-center">
+    <div class="pt-4">
+        <form class="mb-4 pb-4" action="settings" method="post">        
+            <h1 class="h3 mb-3 fw-normal text-center">Please sign in</h1>    
+                <div class="alert alert-warning">
+                    Enter admin secret to access this page
+                </div>
+            <div class="form-floating my-2">
+                <input name="adminSecret" type="password" class="form-control" id="floatingPassword" placeholder="Admin secret">
+                <label for="floatingPassword">Admin secret</label>
+            </div>
+            <div class="form-floating">
+                <button class="btn btn-primary w-100 py-2" type="submit">Sign in</button>
+            </div>
+        </form>
+    </div>
 </div>
-
-<form class="mb-4 pb-4 col-10 col-md-6 col-lg-4 col-xl-3" action="settings" method="post">        
-    <h1 class="h3 mb-3 fw-normal text-center">Please sign in</h1>    
-    
-    <div class="form-floating my-2">
-        <input name="adminSecret" type="password" class="form-control" id="floatingPassword" placeholder="Admin secret">
-        <label for="floatingPassword">Admin secret</label>
-    </div>
-    <div class="form-floating">
-        <button class="btn btn-primary w-100 py-2" type="submit">Sign in</button>
-    </div>
-</form>
 <?php
     }   //if($showAdminSecretForm)
     return;

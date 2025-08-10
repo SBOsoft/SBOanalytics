@@ -90,18 +90,17 @@ switch($action){
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg sbo-nav shadow-sm" data-bs-theme="dark">
+    <nav class="navbar navbar-expand-md sbo-nav shadow-sm" data-bs-theme="dark">
             <div class="container-fluid">
                 <div class="text-light">
-                <a class="navbar-brand me-2" href="https://www.sbosoft.net/sboanalytics.html" title="SBOanalytics free web server analytics" target="_blank">SBOanalytics</a>
 
-                <a class="text-white me-2" href="dashboard" title="Metrics dashboard">Requests</a>
+                <a class="btn btn-sm btn-outline-light border-0" href="dashboard" title="Metrics dashboard">Requests</a>
                 
-                <a class="text-white me-2" href="logs" title="Log viewer">Logs</a>
+                <a class="btn btn-sm btn-outline-light border-0" href="logs" title="Log viewer">Logs</a>
 
-                <a class="text-white me-2" href="os-metrics" title="Operating system metrics">Hosts</a>
+                <a class="btn btn-sm btn-outline-light border-0" href="os-metrics" title="Operating system metrics">Hosts</a>
 
-                <a class="text-white me-2" href="settings" title="SBOanalytics settings">Settings</a>
+                <a class="btn btn-sm btn-outline-light border-0" href="settings" title="SBOanalytics settings">Settings</a>
                 
                 </div>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -115,8 +114,11 @@ switch($action){
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="https://www.sbosoft.net">SBOSOFT</a>
+                            <a class="nav-link" href="https://www.sbosoft.net/sboanalytics.html" title="SBOanalytics free web server analytics" target="_blank">SBOanalytics</a>
                         </li>
+                        <!--li class="nav-item d-none d-lg-inline-block">
+                            <a class="nav-link" href="https://www.sbosoft.net">SBOSOFT</a>
+                        </li-->
                     </ul>
                 </div>
             </div>
