@@ -29,6 +29,7 @@ jobs:
           echo "${{ github.event.inputs.release_name }}" > version.txt
           #copy license 
           cp ../../LICENSE ./
+          cp -R ../../db ./
           
           # Create the zip file by adding all contents from the current directory (DocumentRoot)
           # The ' .' means "all files and directories in the current directory"
