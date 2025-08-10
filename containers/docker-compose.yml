@@ -31,7 +31,7 @@ services:
     volumes:
       - ./mysql/my.cnf:/etc/mysql/my.cnf   # Persistent storage for MySQL data
       - ./mysql_data:/var/lib/mysql   # Persistent storage for MySQL data
-      - ../db/:/docker-entrypoint-initdb.d  #init scripts
+      - ../db/upgrades/:/docker-entrypoint-initdb.d  #init scripts
     #restart: no                     # change to always or unless-stopped for non-dev envs
     networks:
       - sboanalytics-network

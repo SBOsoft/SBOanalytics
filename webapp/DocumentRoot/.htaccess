@@ -48,6 +48,9 @@ RewriteCond %{REQUEST_URI} /version.txt$
 RewriteRule version.txt   - [R=404,L]
 
 
+#return 404 for all .sql files
+RewriteRule \.sql$ - [R=404,NC,L]
+
 #You can set environment variables here or in virtual host config
 
 #Authentication type. REQUIRED. Supported values: none, single (more to be added later)
