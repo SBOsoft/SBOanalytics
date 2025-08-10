@@ -125,6 +125,7 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                                         <td class="text-end">Date/time</td>
                                         <td class="text-end">Memory used</td>
                                         <td class="text-end">Free memory</td>
+                                        <td class="text-end">Available memory</td>
                                         <td class="text-end">Swap used</td>
                                         <td class="text-end">Cache used</td>
                                     </tr>
@@ -134,6 +135,7 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                                         <td class="text-end pe-3">{{ row.label}}</td>
                                         <td class="text-end pe-3">{{ row.memoryUsed}}</td>
                                         <td class="text-end pe-3">{{ row.memoryFree}}</td>
+                                        <td class="text-end pe-3">{{ row.memoryAvailable}}</td>
                                         <td class="text-end pe-3">{{ row.swapUsed}}</td>
                                         <td class="text-end pe-3">{{ row.cacheUsed}}</td>
                                     </tr>
@@ -238,7 +240,8 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                                 'SWAP used':[],
                                 'Cache used':[],
                                 'Memory used':[],
-                                'Free memory':[]
+                                'Free memory':[],
+                                'Available memory':[]
                             };
                             let prevLabelPrefix = '';
                             for(let rowIndex in parsedJson.data){
@@ -300,11 +303,17 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                                     value:parsedJson.data[rowIndex].memoryFree,
                                     name:labelValue
                                 });
+                                memoryUsagesChartData['Available memory'].push({
+                                    value:parsedJson.data[rowIndex].memoryAvailable,
+                                    name:labelValue
+                                });
+                                
                                 self.memoryUsagesDataForTable.push({
                                     label:labelValue,
                                     swapUsed: parsedJson.data[rowIndex].swapUsed,
                                     cacheUsed: parsedJson.data[rowIndex].cacheUsed,
                                     memoryUsed: parsedJson.data[rowIndex].memoryUsed,
+                                    memoryAvailable: parsedJson.data[rowIndex].memoryAvailable,
                                     memoryFree: parsedJson.data[rowIndex].memoryFree
                                 });
                             }

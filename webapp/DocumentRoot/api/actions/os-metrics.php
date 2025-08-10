@@ -95,7 +95,8 @@ switch($groupBy){
             . 'swap_use as  swapUsed,'
             . 'cache_use as cacheUsed, '
             . 'memory_use as memoryUsed,'
-            . 'memory_free as memoryFree ';
+            . 'memory_free as memoryFree,'
+            . 'memory_available as memoryAvailable ';
 }
 $sql.= ' FROM sbo_os_metrics '
         . ' WHERE '

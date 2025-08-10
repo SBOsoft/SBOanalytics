@@ -25,3 +25,6 @@ CREATE TABLE sbo_hosts(
     PRIMARY KEY (host_id),
     UNIQUE KEY sbo_hosts_name (host_name)
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+
+ALTER TABLE sbo_os_metrics ADD COLUMN memory_available bigint not null default 0;
