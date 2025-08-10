@@ -83,14 +83,16 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                             Chart data
                         </button>
                         <div v-if="loadAveragesDataForTable && loadAveragesDataForTable.length>0" class="mt-2 collapse d-lg-block" id="loadAveragesDataTable">
-                            <h6 class="text-primary-emphasis">Load averages<sup>*</sup></h6>
-                            <table class="table table-sm table-hover">
+                            <h6 class="text-primary-emphasis">Uptime<sup>*</sup></h6>
+                            <table class="table table-sm table-hover small">
                                 <thead>
                                     <tr>
                                         <td class="text-end">Date/time</td>
                                         <td class="text-end">1 min. avg.</td>
                                         <td class="text-end">5 min. avg.</td>
                                         <td class="text-end">15 min. avg.</td>
+                                        <td class="text-end">Uptime (minutes)</td>
+                                        <td class="text-end">Users</td>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -99,6 +101,8 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                                         <td class="text-end pe-3">{{ row.loadAverage1}}</td>
                                         <td class="text-end pe-3">{{ row.loadAverage5}}</td>
                                         <td class="text-end pe-3">{{ row.loadAverage15}}</td>
+                                        <td class="text-end pe-3">{{ row.hostUptimeMinutes}}</td>
+                                        <td class="text-end pe-3">{{ row.loggedInUsers}}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -119,7 +123,7 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                         </button>
                         <div v-if="memoryUsagesDataForTable && memoryUsagesDataForTable.length>0" class="mt-2 collapse d-lg-block" id="memoryUsagesDataTable">
                             <h6 class="text-primary-emphasis">Memory data <sup>**</sup></h6>
-                            <table class="table table-sm table-hover">
+                            <table class="table table-sm table-hover small">
                                 <thead>
                                     <tr>
                                         <td class="text-end">Date/time</td>
@@ -285,7 +289,9 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                                     label:labelValue,
                                     loadAverage1:parsedJson.data[rowIndex].loadAverage1,
                                     loadAverage5: parsedJson.data[rowIndex].loadAverage5,
-                                    loadAverage15: parsedJson.data[rowIndex].loadAverage15
+                                    loadAverage15: parsedJson.data[rowIndex].loadAverage15,
+                                    hostUptimeMinutes:parsedJson.data[rowIndex].hostUptimeMinutes,
+                                    loggedInUsers:parsedJson.data[rowIndex].loggedInUsers
                                 });
                                 memoryUsagesChartData['SWAP used'].push({
                                     value:parsedJson.data[rowIndex].swapUsed,
