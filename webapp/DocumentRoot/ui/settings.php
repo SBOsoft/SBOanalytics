@@ -50,8 +50,9 @@ if(($_SESSION['adminSecretVerified'] ?? '') !== 'yes'){
     </div>
 </form>
 <?php
-    }
-}
+    }   //if($showAdminSecretForm)
+    return;
+}   //if !adminSecretVerified
 ?>
     <div id="app" class="p-2">        
         <div class="row">
