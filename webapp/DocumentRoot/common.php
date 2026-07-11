@@ -32,6 +32,12 @@ define('SBO_DB_PASSWORD', getenv('SBO_DB_PASSWORD'));
 define('SBO_AUTH_SINGLE_USER', getenv('SBO_AUTH_SINGLE_USER'));
 define('SBO_AUTH_SINGLE_PWD', getenv('SBO_AUTH_SINGLE_PWD'));
 
+//naive brute-force throttling for login/admin-secret forms, session based
+define('SBO_BRUTE_FORCE_MAX_ATTEMPTS', 10);
+define('SBO_BRUTE_FORCE_BASE_LOCKOUT_SECONDS', 30);
+define('SBO_BRUTE_FORCE_MAX_LOCKOUT_SECONDS', 900);
+define('SBO_SESSION_COOKIE_PATH', getenv('SBO_SESSION_COOKIE_PATH'));
+
 //database connection
 $SBO_DB_PDO_INSTANCE = null;
 
@@ -95,10 +101,62 @@ function SBO_CheckIfUserIsAdmin(){
 
 function SBO_CheckAdminCSRF(){
     $csrfToken = filter_input(INPUT_POST, 'csrfToken', FILTER_VALIDATE_REGEXP, array('default' => null, 'options' => array('regexp' => '/^([a-zA-Z0-9]+)$/')));
-    if(($_SESSION['adminCSRFToken'] ?? '')!==$csrfToken){
+    $sessionToken = $_SESSION['adminCSRFToken'] ?? '';
+    if(empty($sessionToken) || !hash_equals($sessionToken, (string)$csrfToken)){
         SBO_API_Error_Response(400, 'Bad request', 'Invalid CSRF token');
         exit;
     }
+}
+
+/**
+ * Sets hardened session cookie params before starting the session. Must be called
+ * instead of a bare session_start() from every entry point (ui/index.php, api/index.php).
+ */
+function SBO_StartSession(){
+    session_name('sboanalytics');
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => !empty(SBO_SESSION_COOKIE_PATH) ? SBO_SESSION_COOKIE_PATH : '/',
+        'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+    session_start();
+}
+
+/**
+ * Session-keyed brute-force throttle for the login and admin-secret forms. Not a
+ * substitute for proxy/WAF-level rate limiting (see README), but blunts naive
+ * automated guessing without requiring any new infrastructure.
+ */
+function SBO_CheckBruteForceLockout($isApi, $keyPrefix){
+    $lockedUntil = $_SESSION[$keyPrefix.'LockedUntil'] ?? 0;
+    $remaining = $lockedUntil - time();
+    if($remaining > 0){
+        header('Retry-After: '.$remaining);
+        if($isApi){
+            SBO_API_Error_Response(429, 'Too many attempts', 'Too many failed attempts. Please try again later.');
+        }
+        else{
+            http_response_code(429);
+            echo 'Too many failed attempts. Please try again later.';
+        }
+        exit;
+    }
+}
+
+function SBO_RegisterFailedAuthAttempt($keyPrefix){
+    $failCount = ($_SESSION[$keyPrefix.'FailCount'] ?? 0) + 1;
+    $_SESSION[$keyPrefix.'FailCount'] = $failCount;
+    if($failCount >= SBO_BRUTE_FORCE_MAX_ATTEMPTS){
+        $lockSeconds = min(SBO_BRUTE_FORCE_MAX_LOCKOUT_SECONDS, SBO_BRUTE_FORCE_BASE_LOCKOUT_SECONDS * (2 ** ($failCount - SBO_BRUTE_FORCE_MAX_ATTEMPTS)));
+        $_SESSION[$keyPrefix.'LockedUntil'] = time() + $lockSeconds;
+    }
+}
+
+function SBO_ClearFailedAuthAttempts($keyPrefix){
+    unset($_SESSION[$keyPrefix.'FailCount']);
+    unset($_SESSION[$keyPrefix.'LockedUntil']);
 }
 
 function SBO_PrintQueryResultRowAsJson($row){
@@ -118,7 +176,7 @@ function SBO_HtmlEncode($str){
 }
 
 function SBO_JsonEncode($str){
-    echo json_encode($str);
+    echo json_encode($str, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
 }
 
 //////// DB

@@ -94,3 +94,28 @@ defined by SBO_AUTH_SINGLE_USER and SBO_AUTH_SINGLE_PWD environment variables.
 Always review https://github.com/SBOsoft/SBOanalytics/blob/main/webapp/DocumentRoot/.htaccess for latest updates to configuration options
 and additional information.
 
+## Data retention and privacy
+
+`sbo_rawlogs.client_ip` stores visitor IP addresses, which are personal data under
+regimes like GDPR. This application does not purge or anonymize this data on its own.
+Operators are responsible for defining and enforcing a retention policy appropriate for
+their jurisdiction, for example:
+
+  - Periodically delete rows from `sbo_rawlogs` older than your chosen retention window
+(a scheduled `DELETE ... WHERE request_ts < ...` job, e.g. via cron, is sufficient).
+  - Alternatively, truncate/zero the last octet (IPv4) or last 80 bits (IPv6) of
+`client_ip` after N days if you need aggregate metrics but not exact IPs long-term.
+
+## Defense-in-depth beyond the app's own authentication
+
+`SBO_AUTH_TYPE=single` provides a single shared username/password and has no
+username enumeration surface, but it is still just one secret guarding the whole
+application, including the raw log viewer. If you are running with `SBO_AUTH_TYPE=none`
+(anonymous mode, not recommended for production) or want additional protection on top of
+`single`, consider layering one of the following at your reverse proxy/web server, in
+front of this application:
+
+  - HTTP Basic Auth at the proxy layer.
+  - An IP allow-list restricting access to known/trusted networks.
+  - A VPN or SSH tunnel so the application is not exposed directly to the public internet.
+

@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 define('SBO_FILE_INCLUDED_PROPERLY', true);
 include('../common.php');
 
-session_start();
+SBO_StartSession();
 
 $action=($_REQUEST['act'] ?? null);
 if($action!=='auth-form' && $action!=='auth-submit'){

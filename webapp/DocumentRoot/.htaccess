@@ -1,3 +1,5 @@
+Options -Indexes
+
 RewriteEngine On
 
 RewriteCond %{REQUEST_URI} api/metrics$
@@ -73,3 +75,6 @@ RewriteRule \.sql$ - [R=404,NC,L]
 
 #Password/secret required to access administrative functions/pages
 #SetEnv SBO_ADMIN_SECRET  "PUT_A_STRONG_PASSWORD_HERE"
+
+#Session cookie path, defaults to / if not set. Set to a shared parent of ui and api folders
+#SetEnv SBO_SESSION_COOKIE_PATH "/"  

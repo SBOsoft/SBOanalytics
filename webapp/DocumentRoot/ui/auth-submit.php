@@ -23,13 +23,16 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
     exit;
 }
 
+SBO_CheckBruteForceLockout(false, 'auth');
+
 $username = ($_POST['username'] ?? null);
 $password = ($_POST['password'] ?? null);
 
 switch(SBO_AUTH_TYPE){
     case 'single':
         //don't allow empty username or password
-        if(!empty($username) && !empty($password) && $username===SBO_AUTH_SINGLE_USER && $password === SBO_AUTH_SINGLE_PWD){
+        if(!empty($username) && !empty($password) && hash_equals((string)SBO_AUTH_SINGLE_USER, $username) && hash_equals((string)SBO_AUTH_SINGLE_PWD, $password)){
+            SBO_ClearFailedAuthAttempts('auth');
             session_regenerate_id(true);
             $_SESSION['authOK'] = true;
             $_SESSION['authenticatedUsername'] = $username;
@@ -39,4 +42,5 @@ switch(SBO_AUTH_TYPE){
         break;
 }
 
+SBO_RegisterFailedAuthAttempt('auth');
 header('Location: auth-form?authError=1');

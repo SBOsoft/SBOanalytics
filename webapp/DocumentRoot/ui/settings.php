@@ -25,11 +25,17 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
 if(($_SESSION['adminSecretVerified'] ?? '') !== 'yes'){
     $showAdminSecretForm = true;
     if(!empty($_POST['adminSecret'])){
+        SBO_CheckBruteForceLockout(false, 'adminSecret');
         $secretFromEnv = getenv('SBO_ADMIN_SECRET');
-        if(!empty($secretFromEnv) && $secretFromEnv === $_POST['adminSecret']){
+        if(!empty($secretFromEnv) && hash_equals($secretFromEnv, $_POST['adminSecret'])){
+            SBO_ClearFailedAuthAttempts('adminSecret');
+            session_regenerate_id(true);
             $_SESSION['adminSecretVerified'] = 'yes';
             $_SESSION['adminCSRFToken'] = bin2hex(random_bytes(20));
             $showAdminSecretForm = false;
+        }
+        else{
+            SBO_RegisterFailedAuthAttempt('adminSecret');
         }
     }
     if($showAdminSecretForm){
