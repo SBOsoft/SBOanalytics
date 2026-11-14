@@ -25,5 +25,5 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
 
 $sql = 'SELECT domain_id as domainId, domain_name as domainName, description, created, timeWindowSizeMinutes FROM sbo_domains ORDER BY domain_name';
 $hasMoreResults = false;
-$domains = SBO_DB_Query($sql, null, 100, $hasMoreResults);
+$domains = SBO_DB_Query($sql, null, 1000, $hasMoreResults);
 echo json_encode($domains);

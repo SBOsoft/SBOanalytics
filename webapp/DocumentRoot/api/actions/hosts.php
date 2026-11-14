@@ -25,5 +25,5 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
 
 $sql = 'SELECT host_id as hostId, host_name as hostName, description, created FROM sbo_hosts ORDER BY host_name';
 $hasMoreResults = false;
-$hosts = SBO_DB_Query($sql, null, 100, $hasMoreResults);
+$hosts = SBO_DB_Query($sql, null, 1000, $hasMoreResults);
 echo json_encode($hosts);

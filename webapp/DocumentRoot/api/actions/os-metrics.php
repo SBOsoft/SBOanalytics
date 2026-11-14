@@ -2,7 +2,7 @@
 /*
 Copyright (C) 2025 SBOSOFT, Serkan Özkan
 
-This file is part of, SBOanalytics web site analytics 
+This file is part of, SBOanalytics web site analytics
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -23,45 +23,24 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
     exit;
 }
 
-$hostId = (int) filter_input(INPUT_GET, 'hostId', FILTER_SANITIZE_NUMBER_INT);
-
+$hostId = (int)($_REQUEST['hostId'] ?? 0);
 if(!$hostId){
-    SBO_API_Error_Response(400, 'Invalid hostId parameter', 'hostId parameter is required');
-    return;
+    SBO_API_ExitWithError(400, 'Invalid hostId parameter', 'hostId parameter is required');
 }
 
+list($limit, $page) = SBO_API_GetPaging(50);
 
-$limit = (int) filter_input(INPUT_GET, 'limit', FILTER_SANITIZE_NUMBER_INT);
-if($limit<1){
-    $limit = 50;
-}
-if($limit >1000){
-    $limit = 1000;
-}
-$page = (int) filter_input(INPUT_GET, 'page', FILTER_SANITIZE_NUMBER_INT);
-if($page<1){
-    $page = 1;
-}
-if($page >1000){
-    $page = 1;
-}
+$now = new DateTimeImmutable();
 
-
-$twStart = filter_input(INPUT_GET, 'twStart', FILTER_VALIDATE_REGEXP, 
-        array('default' => null, 'options' => array('regexp' => '/^([0-9]{4}-[0-9]{2}-[0-9]{2}\s[0-9]{2}:[0-9]{2})$/')));
-
-
-$twEnd = filter_input(INPUT_GET, 'twEnd', FILTER_VALIDATE_REGEXP, 
-        array('default' => null, 'options' => array('regexp' => '/^([0-9]{4}-[0-9]{2}-[0-9]{2}\s[0-9]{2}:[0-9]{2})$/')));
+//twStart and twEnd are like '2025-07-11 11:00', default is the last 24 hours
+$twStartDt = SBO_API_GetDateTimeParam('twStart', false, $now->modify('-24 hours'));
+$twEndDt = SBO_API_GetDateTimeParam('twEnd', true, $now);
+SBO_API_CheckTimeRange($twStartDt, $twEndDt);
 
 //supported values: empty string: no grouping. hour: by hour, day:by day, month: by month
 $groupBy = trim($_REQUEST['groupBy'] ?? '');
 
-$groupBy = filter_input(INPUT_GET, 'groupBy', FILTER_UNSAFE_RAW);
-
 $sqlParams = array();
-
-
 
 $sql = 'SELECT  ';
 $sqlAvgPart = 'ROUND(AVG(up_duration_minutes),2) as hostUptimeMinutes, '
@@ -87,7 +66,7 @@ switch($groupBy){
         $sql.='  YEAR(metrics_ts) as year, MONTH(metrics_ts) as month,  ';
         $sql.=$sqlAvgPart;
         break;
-    default:
+    case '':
         $sql.= ' metrics_ts as metricTS, up_duration_minutes as hostUptimeMinutes, '
             . 'users as loggedInUsers, '
             . 'load_average1 as loadAverage1, '
@@ -98,6 +77,9 @@ switch($groupBy){
             . 'memory_use as memoryUsed,'
             . 'memory_free as memoryFree,'
             . 'memory_available as memoryAvailable ';
+        break;
+    default:
+        SBO_API_ExitWithError(400, 'Invalid groupBy parameter', 'groupBy must be empty or one of hour, day, month');
 }
 $sql.= ' FROM sbo_os_metrics '
         . ' WHERE '
@@ -105,31 +87,27 @@ $sql.= ' FROM sbo_os_metrics '
         . ' AND metrics_ts>=:twStart AND metrics_ts<=:twEnd ';
 
 $sqlParams[':hostId'] = $hostId;
-$sqlParams[':twStart'] = $twStart;
-$sqlParams[':twEnd'] = $twEnd;
+$sqlParams[':twStart'] = $twStartDt->format('Y-m-d H:i:s');
+$sqlParams[':twEnd'] = $twEndDt->format('Y-m-d H:i:s');
 
+//explicit time order, charts and paging rely on it
 switch($groupBy){
     case 'hour':
         $sql.=' GROUP BY DATE(metrics_ts), HOUR(metrics_ts) ';
+        $sql.=' ORDER BY DATE(metrics_ts), HOUR(metrics_ts) ';
         break;
     case 'day':
         $sql.=' GROUP BY DATE(metrics_ts) ';
+        $sql.=' ORDER BY DATE(metrics_ts) ';
         break;
     case 'month':
         $sql.=' GROUP BY YEAR(metrics_ts), MONTH(metrics_ts) ';
+        $sql.=' ORDER BY YEAR(metrics_ts), MONTH(metrics_ts) ';
         break;
     default:
-        $sqlAvgPart = '';
+        $sql.=' ORDER BY metrics_ts ';
         break;
 }
 $sql.= ' LIMIT :limit OFFSET :offset';
 
-$sqlParams[':limit'] = ($limit+1);
-$sqlParams[':offset'] = ($page - 1) * $limit;
-
-SBO_API_ResponseStart($limit, $page);
-$hasMoreResults = false;
-
-SBO_DB_Query($sql, $sqlParams, $limit, $hasMoreResults, 'SBO_PrintQueryResultRowAsJson');
-
-SBO_API_ResponseEnd($hasMoreResults);
+SBO_API_StreamQuery($sql, $sqlParams, $limit, $page);

@@ -75,10 +75,12 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
 
             <div class="row">
                 <div class="col-md-6 col-lg-6">                    
-                    <sbo-barchart ref="totalRequestsBarChart" bar-color="" hover-color="" target-element-id="totalRequestsBarChart" title="Total requests" y-axis-name="Req. Count" series-name="Requests"></sbo-barchart>                    
+                    <sbo-barchart ref="totalRequestsBarChart" bar-color="" hover-color="" target-element-id="totalRequestsBarChart" title="Total requests" y-axis-name="Req. Count" series-name="Requests"></sbo-barchart>
+                    <div v-if="truncatedCharts.totalRequestsBarChart" class="small text-warning-emphasis mt-1">Showing only the first 1000 points. Choose a shorter period or a coarser grouping.</div>
                 </div>
                 <div class="col-md-6 col-lg-6">
-                    <sbo-barchart ref="bytesSentBarChart" bar-color="#0a9396" hover-color="#219ebc" target-element-id="bytesSentBarChart" title="Bytes sent" y-axis-name="Bytes" series-name="Bytes sent"></sbo-barchart>                    
+                    <sbo-barchart ref="bytesSentBarChart" bar-color="#0a9396" hover-color="#219ebc" target-element-id="bytesSentBarChart" title="Bytes sent" y-axis-name="Bytes" series-name="Bytes sent"></sbo-barchart>
+                    <div v-if="truncatedCharts.bytesSentBarChart" class="small text-warning-emphasis mt-1">Showing only the first 1000 points. Choose a shorter period or a coarser grouping.</div>
                 </div>
             </div>
             <div class="row mt-2">
@@ -156,7 +158,9 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                     ?>',
                     twEndStr:'<?php echo date('Y-m-d').'T'.date('H:i');?>',
                     groupBy:'day',
-                    loadedCharts: {}
+                    loadedCharts: {},
+                    //chartId => true when the api returned more points than the chart shows
+                    truncatedCharts: {}
                 };
             },
             mounted() {
@@ -165,11 +169,12 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                 this.loadAllDomains();
             },
             computed:{                
+                //YYYYMMDDHHMM, e.g. 202505230000
                 twStart(){
-                    return this.twStartStr.replace(/[^0-9]+/, '');
+                    return this.twStartStr.replace(/[^0-9]+/g, '');
                 },
                 twEnd(){
-                    return this.twEndStr.replace(/[^0-9]+/, '');
+                    return this.twEndStr.replace(/[^0-9]+/g, '');
                 }
             },
             // Methods for the component
@@ -177,6 +182,7 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                 loadCharts(){
                     this.error = '';
                     this.loadedCharts = {};
+                    this.truncatedCharts = {};
                     this.loadTotalRequestsData();
                     this.loadBytesSentData();
                     this.loadRequestsByStatusCodesData();
@@ -274,8 +280,10 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                             '&metricType='+encodeURIComponent(metricType)+
                             '&twStart=' + encodeURIComponent(this.twStart) + 
                             '&twEnd=' + encodeURIComponent(this.twEnd) + 
-                            '&groupBy=' + encodeURIComponent(this.groupBy);
+                            '&groupBy=' + encodeURIComponent(this.groupBy) +
+                            '&limit=1000';
                     SBO_FetchJson(url).then((parsedJson)=>{
+                        self.truncatedCharts[chartId] = parsedJson.hasMoreResults;
                         let chartData = [];
                         for(let rowIndex in parsedJson.data){
                             if(!parsedJson.data[rowIndex]){

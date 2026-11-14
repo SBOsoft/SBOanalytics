@@ -2,7 +2,7 @@
 /*
 Copyright (C) 2025 SBOSOFT, Serkan Özkan
 
-This file is part of, SBOanalytics web site analytics 
+This file is part of, SBOanalytics web site analytics
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -26,31 +26,19 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
 
 $domainId = (int)($_REQUEST['domainId'] ?? 0);
 if(!$domainId){
-    SBO_API_Error_Response(400, 'Invalid domainId parameter', 'domainId parameter is required');
-    return;
+    SBO_API_ExitWithError(400, 'Invalid domainId parameter', 'domainId parameter is required');
 }
 
-$limit = (int)($_REQUEST['limit'] ?? 20);
-if($limit >1000){
-    $limit = 1000;
-}
-$page = (int)($_REQUEST['page'] ?? 1);
-if($page >1000){
-    $page = 1;
-}
+list($limit, $page) = SBO_API_GetPaging(20);
 
 $now = new DateTimeImmutable();
 
-//twStart and twEnd will have '2025-07-11 11:00' format
-$twStart = trim($_REQUEST['twStart'] ?? '');
-if(!$twStart){
-    $twStart = $now->modify('-1 day')->format('Y-m-d H:i:s');
-}
-$twEnd = trim($_REQUEST['twEnd'] ?? '');
-if(!$twEnd){
-    $twEnd = $now->format('Y-m-d H:i:s');
-}
-
+//twStart and twEnd are like '2025-07-11 11:00' or '2025-07-11 11:00:59'
+$twStartDt = SBO_API_GetDateTimeParam('twStart', false, $now->modify('-1 day'));
+$twEndDt = SBO_API_GetDateTimeParam('twEnd', true, $now);
+SBO_API_CheckTimeRange($twStartDt, $twEndDt);
+$twStart = $twStartDt->format('Y-m-d H:i:s');
+$twEnd = $twEndDt->format('Y-m-d H:i:s');
 
 
 $keyName = trim($_REQUEST['keyName'] ?? '');
@@ -74,61 +62,73 @@ $sqlParams[':domainId'] = $domainId;
 $sqlParams[':twStartTS'] = $twStart;
 $sqlParams[':twEndTS'] = $twEnd;
 switch($keyName){
+    case '':
+        //no filter
+        break;
     case 'clientIP':
         $sql.=' AND client_ip=INET6_ATON(:clientIP) ';
-        $sqlParams[':clientIP'] = $keyValue;        
+        $sqlParams[':clientIP'] = $keyValue;
+        break;
+    case 'remoteUser':
+        $sql.=' AND remote_user=:remoteUser ';
+        $sqlParams[':remoteUser'] = $keyValue;
         break;
     case 'method':
         $sql.=' AND http_method=:method ';
-        $sqlParams[':method'] = $keyValue;        
+        $sqlParams[':method'] = $keyValue;
         break;
     case 'basePath':
-        $sql.=' AND path3 LIKE :path ';
-        $sqlParams[':path'] = $keyValue.'%';        
+        //the path itself, or anything below it: '/blog' matches '/blog' and '/blog/2025/post'
+        //but not '/blogger'. The root path '/' (and an empty value) match exactly, otherwise
+        //'/' would match every request.
+        if($keyValue === '' || $keyValue === '/'){
+            $sql.=' AND path3=:path ';
+            $sqlParams[':path'] = $keyValue;
+        }
+        else{
+            $sql.=" AND (path3=:path OR path3 LIKE :pathPrefix ESCAPE '!') ";
+            $sqlParams[':path'] = $keyValue;
+            $prefix = str_ends_with($keyValue, '/') ? $keyValue : $keyValue.'/';
+            $sqlParams[':pathPrefix'] = SBO_DB_EscapeLike($prefix).'%';
+        }
         break;
     case 'statusCode':
         $sql.=' AND http_status=:statusCode ';
-        $sqlParams[':statusCode'] = $keyValue;        
+        $sqlParams[':statusCode'] = $keyValue;
         break;
     case 'referer':
         $sql.=' AND referer=:referer ';
-        $sqlParams[':referer'] = $keyValue;        
+        $sqlParams[':referer'] = $keyValue;
         break;
     case 'isMalicious':
         $sql.=' AND is_malicious=:isMalicious ';
-        $sqlParams[':isMalicious'] = $keyValue;        
+        $sqlParams[':isMalicious'] = $keyValue;
         break;
     case 'uaOS':
         $sql.=' AND ua_os=:uaOS ';
-        $sqlParams[':uaOS'] = $keyValue;        
+        $sqlParams[':uaOS'] = $keyValue;
         break;
     case 'uaFamily':
         $sql.=' AND ua_family=:uaFamily ';
-        $sqlParams[':uaFamily'] = $keyValue;        
+        $sqlParams[':uaFamily'] = $keyValue;
         break;
     case 'deviceType':
         $sql.=' AND ua_device_type=:deviceType ';
-        $sqlParams[':deviceType'] = $keyValue;        
+        $sqlParams[':deviceType'] = $keyValue;
         break;
     case 'isHuman':
         $sql.=' AND ua_is_human=:isHuman ';
-        $sqlParams[':isHuman'] = $keyValue;        
+        $sqlParams[':isHuman'] = $keyValue;
         break;
     case 'requestIntent':
         $sql.=' AND ua_intent=:requestIntent ';
-        $sqlParams[':requestIntent'] = $keyValue;        
+        $sqlParams[':requestIntent'] = $keyValue;
         break;
+    default:
+        SBO_API_ExitWithError(400, 'Invalid keyName parameter', 'keyName is not one of the supported filter names');
 }
 
 $sql.= ' ORDER BY request_ts';
 $sql.= ' LIMIT :limit OFFSET :offset';
-$sqlParams[':limit'] = ($limit+1);
-$sqlParams[':offset'] = ($page - 1) * $limit;
-//echo $sql;
-//print_r($sqlParams);
-SBO_API_ResponseStart($limit, $page);
-$hasMoreResults = false;
 
-SBO_DB_Query($sql, $sqlParams, $limit, $hasMoreResults, 'SBO_PrintQueryResultRowAsJson');
-
-SBO_API_ResponseEnd($hasMoreResults);
+SBO_API_StreamQuery($sql, $sqlParams, $limit, $page);

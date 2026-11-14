@@ -239,7 +239,7 @@ if(($_SESSION['adminSecretVerified'] ?? '') !== 'yes'){
                     moreDomains:false,
                     domainsPage: 1,
                     editDomainError: '',
-                    currentEditedDomain:{domainId:0, domainName:'', description:'', timeWindowSizeMinutesEdit:10}
+                    currentEditedDomain:{domainId:0, domainName:'', description:'', timeWindowSizeMinutes:10}
                 };
             },
             mounted() {
@@ -290,7 +290,7 @@ if(($_SESSION['adminSecretVerified'] ?? '') !== 'yes'){
                     this.editDomainError = '';
                 },
                 addNewDomain(){
-                    this.currentEditedDomain = {domainId:0, domainName:'', description:'', timeWindowSizeMinutesEdit:10}
+                    this.currentEditedDomain = {domainId:0, domainName:'', description:'', timeWindowSizeMinutes:10}
                     this.showEditDomainModal();
                 },
                 editDomain(domainInfo){

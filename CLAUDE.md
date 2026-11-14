@@ -104,19 +104,28 @@ warns this setup is **not for production use**.
 ## Database conventions
 
 - All tables are prefixed `sbo_`.
-- PHP always talks to MySQL through the two wrapper functions in `common.php`:
-  `SBO_DB_Query($sql, $params, $limit, &$hasMore, $callbackFunction=null)` and
-  `SBO_DB_InsertUpdateDelete($sql, $params, $returnLastInsertId=false)`. Both use PDO
-  prepared statements with named parameters — **never string-concatenate user input into
-  SQL**. When a SQL fragment must vary by user input (e.g. `groupBy`, `keyName`), the
-  established pattern is a `switch` on the input that appends **hardcoded** SQL fragments
-  per case (see `api/actions/metrics.php`, `logs.php`, `os-metrics.php`) — the raw input
-  value itself is never interpolated into the query string, only bound as a parameter.
-- `SBO_DB_Query`'s `$callbackFunction` mode streams results directly to output as a JSON
-  array (writes `[`, one `callbackFunction($row)` + `,` per row, then trailing `null]`) to
-  avoid buffering large result sets in memory — used by all the paginated list endpoints.
-  JSON responses from these endpoints therefore always have a spurious trailing `null`
-  element by design; client JS in `charts.js` already accounts for this (`if(!row) continue;`).
+- PHP always talks to MySQL through the wrapper functions in `common.php`:
+  `SBO_DB_Query($sql, $params, $limit, &$hasMore)` (returns rows as an array),
+  `SBO_DB_InsertUpdateDelete($sql, $params, $returnLastInsertId=false)` and the lower level
+  `SBO_DB_Execute($sql, $params)`. All use PDO prepared statements with named parameters
+  — **never string-concatenate user input into SQL**. When a SQL fragment must vary by user
+  input (e.g. `groupBy`, `keyName`), the established pattern is a `switch` on the input that
+  appends **hardcoded** SQL fragments per case and rejects unknown values with a 400 (see
+  `api/actions/metrics.php`, `logs.php`, `os-metrics.php`) — the raw input value itself is
+  never interpolated into the query string, only bound as a parameter. For LIKE filters,
+  escape the bound value with `SBO_DB_EscapeLike()` and use `LIKE :p ESCAPE '!'`.
+- Database errors are thrown (PDO `ERRMODE_EXCEPTION`; an unreachable database throws a
+  `RuntimeException` with code `SBO_ERROR_DB_UNAVAILABLE`). Don't check return values for
+  `false`; catch only what you handle (e.g. `SBO_DB_IsDuplicateKeyError($e)` → 409) and
+  rethrow the rest.
+- Paged list endpoints respond via `SBO_API_StreamQuery($sql, $params, $limit, $page)` in
+  `api/index.php`; the SQL must end with `LIMIT :limit OFFSET :offset` (values are set by the
+  helper). It executes the query **before** writing any output, then streams
+  `{"limit","page","data":[...rows, null],"hasMoreResults"}`. The data array always ends
+  with a spurious trailing `null` by design; client JS in `charts.js` already accounts for
+  this (`if(!row) continue;`).
+- Results that charts or paging depend on must have an explicit `ORDER BY` — MySQL 8 does
+  not sort `GROUP BY` results implicitly.
 - `metric_type` in `sbo_metrics` is a numeric code whose meaning is defined by the
   **SBOLogProcessor** project, not documented in this repo's schema. Known codes in use by
   this app's UI (from `charts.js`/`dashboard.php`): `1`=total requests, `2`=bytes sent,
@@ -140,6 +149,18 @@ warns this setup is **not for production use**.
 - New admin-mutating API actions must call both `SBO_CheckIfUserIsAdmin()` and
   `SBO_CheckAdminCSRF()` before touching the database, matching
   `admin-domain-save.php`/`admin-host-save.php`.
+- API actions (`api/actions/*.php`):
+  - Read paging with `SBO_API_GetPaging($defaultLimit)` (clamps limit/page to 1..1000) and
+    time ranges with `SBO_API_GetDateTimeParam($name, $isEnd, $default)` +
+    `SBO_API_CheckTimeRange()`. Invalid input → `SBO_API_ExitWithError(400, ...)`.
+    Error bodies are always `{"error": ..., "description": ...}`.
+  - `api/index.php` closes the session (`session_write_close()`) right after starting it so
+    parallel requests don't serialize on the session lock. `$_SESSION` is still readable,
+    but **API actions must not write to the session**.
+  - `display_errors` is off for the API and uncaught exceptions become a generic JSON
+    500/503 (`SBO_API_ExceptionHandler`); details go to the server error log only.
+  - Allowed `timeWindowSizeMinutes` values are `SBO_ALLOWED_TIME_WINDOW_SIZES`
+    (1, 5, 10, 15, 30, 60 — the set SBOLogProcessor supports); keep the UI `<select>` in sync.
 - Frontend JS has no module system — everything is a global (`SBOBarChart`, `SBOPieChart`,
   `SBOLineChart`, `SBODetailedMetricsView`, `SBOLogsView`, `SBOChartMixin`, plus free
   functions prefixed `SBO_`). Keep new components/functions in `charts.js` following the
