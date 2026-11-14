@@ -116,7 +116,7 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                 </div>
                 
                 <div class="col-md-6 col-lg-6">                    
-                    <sbo-linechart ref="memoryUsagesChart"  target-element-id="memoryUsagesChart" title="Memory and swap use" y-axis-name="Bytes" series-name="Memory" value-format="bytes"></sbo-linechart>                    
+                    <sbo-linechart ref="memoryUsagesChart"  target-element-id="memoryUsagesChart" title="Memory and swap use" y-axis-name="Memory" series-name="Memory" value-format="kibibytes"></sbo-linechart>                    
                     <div class="my-2" v-if="memoryUsagesDataForTable && memoryUsagesDataForTable.length>0">                        
                         <button class="btn btn-outline-secondary btn-sm d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#memoryUsagesDataTable" aria-expanded="false" aria-controls="memoryUsagesDataTable" title="Show chart data in tabular format">
                             Chart data
@@ -137,11 +137,11 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                                 <tbody>
                                     <tr v-for="(row) in memoryUsagesDataForTable">
                                         <td class="text-end pe-3">{{ row.label}}</td>
-                                        <td class="text-end pe-3" v-bind:title="row.memoryUsed + ' bytes'">{{ formatBytes(row.memoryUsed) }}</td>
-                                        <td class="text-end pe-3" v-bind:title="row.memoryFree + ' bytes'">{{ formatBytes(row.memoryFree) }}</td>
-                                        <td class="text-end pe-3" v-bind:title="row.memoryAvailable + ' bytes'">{{ formatBytes(row.memoryAvailable) }}</td>
-                                        <td class="text-end pe-3" v-bind:title="row.swapUsed + ' bytes'">{{ formatBytes(row.swapUsed) }}</td>
-                                        <td class="text-end pe-3" v-bind:title="row.cacheUsed + ' bytes'">{{ formatBytes(row.cacheUsed) }}</td>
+                                        <td class="text-end pe-3" v-bind:title="row.memoryUsed + ' KiB'">{{ formatKibibytes(row.memoryUsed) }}</td>
+                                        <td class="text-end pe-3" v-bind:title="row.memoryFree + ' KiB'">{{ formatKibibytes(row.memoryFree) }}</td>
+                                        <td class="text-end pe-3" v-bind:title="row.memoryAvailable + ' KiB'">{{ formatKibibytes(row.memoryAvailable) }}</td>
+                                        <td class="text-end pe-3" v-bind:title="row.swapUsed + ' KiB'">{{ formatKibibytes(row.swapUsed) }}</td>
+                                        <td class="text-end pe-3" v-bind:title="row.cacheUsed + ' KiB'">{{ formatKibibytes(row.cacheUsed) }}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -250,8 +250,9 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                         self.error = 'Could not load hosts: ' + err.message;
                     });
                 },
-                formatBytes(value){
-                    return SBO_FormatBytes(value);
+                //memory values are stored in KiB (as in /proc/meminfo)
+                formatKibibytes(value){
+                    return SBO_FormatKibibytes(value);
                 },
                 formatMinutes(value){
                     return SBO_FormatMinutes(value);

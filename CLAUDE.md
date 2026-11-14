@@ -183,6 +183,9 @@ warns this setup is **not for production use**.
 - Page filters live in the URL query string (`SBO_ReadUrlState` with validators /
   `SBO_WriteUrlState`), so views can be bookmarked and survive a refresh.
 - Byte/minute values: `SBO_FormatBytes`/`SBO_FormatMinutes`; charts take `value-format="bytes"`.
+  OS memory values in `sbo_os_metrics` (memory/swap/cache) are **KiB**, not bytes (as in
+  `/proc/meminfo`): use `SBO_FormatKibibytes` / `value-format="kibibytes"` for them.
+  `bytes_sent` / metric type 2 are bytes.
   Values such as referers, paths and user agents are attacker-controlled: if you ever write an
   ECharts tooltip/label **function** formatter that returns HTML, escape them (string-template
   formatters and `valueFormatter` are escaped by ECharts).

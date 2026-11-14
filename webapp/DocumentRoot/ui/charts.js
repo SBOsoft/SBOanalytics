@@ -166,12 +166,26 @@ function SBO_FormatMinutes(value){
 }
 
 /*
- Returns the value formatter function for a chart's valueFormat prop ('bytes'), or null.
+ Formats a value given in kibibytes (KiB, e.g. memory values from /proc/meminfo as stored
+ by SBOLogProcessor), e.g. 2048 -> '2.00 MB'. Non-numeric values are returned unchanged.
+ */
+function SBO_FormatKibibytes(value){
+    const n = Number(value);
+    if(value === null || value === '' || !isFinite(n)){
+        return value;
+    }
+    return SBO_FormatBytes(n * 1024);
+}
+
+/*
+ Returns the value formatter function for a chart's valueFormat prop ('bytes', 'kibibytes'), or null.
  */
 function SBO_GetValueFormatter(valueFormat){
     switch(valueFormat){
         case 'bytes':
             return SBO_FormatBytes;
+        case 'kibibytes':
+            return SBO_FormatKibibytes;
         default:
             return null;
     }
@@ -435,7 +449,7 @@ const SBOBarChart  = {
         barColor: String,
         hoverColor: String,
         vertical: Boolean,
-        //'bytes' formats axis and tooltip values as KB/MB/GB, empty: plain numbers
+        //'bytes' or 'kibibytes' formats axis and tooltip values as KB/MB/GB, empty: plain numbers
         valueFormat: String
     },
     methods: {
@@ -465,7 +479,9 @@ const SBOBarChart  = {
                 },
                 axisTick: {
                     alignWithLabel: true
-                }
+                },
+                //vertical (horizontal bars): first item at the top, so a top-N list reads from max to min
+                inverse: this.vertical
             };
             const valueAxis = {
                 type: 'value',
@@ -817,7 +833,7 @@ const SBOLineChart  = {
         hoverColor: String,
         noBorder: Boolean,
         hideLegends: Boolean,
-        //'bytes' formats axis and tooltip values as KB/MB/GB, empty: plain numbers
+        //'bytes' or 'kibibytes' formats axis and tooltip values as KB/MB/GB, empty: plain numbers
         valueFormat: String
     },
     methods: {
