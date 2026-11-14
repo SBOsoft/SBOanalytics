@@ -28,20 +28,27 @@ if($action!=='auth-form' && $action!=='auth-submit'){
     SBO_CheckIsAuthenticated(false);
 }
 
+//which libraries the page needs: Vue + charts.js for the app pages, ECharts only for pages with charts
+$loadVue = true;
+$loadECharts = false;
 switch($action){
     case 'auth-form':
         $pageTitle='Please sign in first';
+        $loadVue = false;
         break;
-    case 'auth-submit':        
+    case 'auth-submit':
         include('auth-submit.php');
         return;     //return here, we don't need html etc, just validating submitted values
+    case 'admin-auth-submit':
+        include('admin-auth-submit.php');
+        return;     //redirects back to settings, no html
     case 'logs':
         $pageTitle='Log viewer';
-        
+
         break;
     case 'os-metrics':
         $pageTitle='Operating system metrics';
-        
+        $loadECharts = true;
         break;
     case 'settings':
         $pageTitle='SBOanalytics settings and administration';
@@ -49,6 +56,7 @@ switch($action){
     case 'dashboard':
     default:
         $pageTitle='Metrics Dashboard';
+        $loadECharts = true;
         break;
 }
 
@@ -60,10 +68,17 @@ switch($action){
     <title><?php echo SBO_HtmlEncode($pageTitle);?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+<?php if($loadVue){ ?>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.5.13/vue.global.prod.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">    
+<?php } ?>
+<?php if($loadECharts){ ?>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/6.0.0/echarts.min.js" integrity="sha512-4/g9GAdOdTpUP2mKClpKsEzaK7FQNgMjq+No0rX8XZlfrCGtbi4r+T/p5fnacsEC3zIAmHKLJUL7sh3/yVA4OQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<?php } ?>
+<?php if($loadVue){ ?>
+    <!-- shared helpers and Vue components; chart components need ECharts only when they are mounted -->
     <script src="charts.js"></script>
+<?php } ?>
     <style>
         body {
             font-family: sans-serif;
@@ -131,9 +146,6 @@ switch($action){
         case 'auth-form':
             include('auth-form.php');
             break;
-        case 'auth-submit':
-            include('auth-submit.php');
-            break;        
         case 'logs':
             include('log-viewer.php');
             break;        

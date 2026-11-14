@@ -29,6 +29,9 @@ RewriteRule ui/auth-form  ui/index.php?act=auth-form [L,QSA]
 RewriteCond %{REQUEST_URI} ui/auth-submit$
 RewriteRule ui/auth-submit  ui/index.php?act=auth-submit [L,QSA]
 
+RewriteCond %{REQUEST_URI} ui/admin-auth-submit$
+RewriteRule ui/admin-auth-submit  ui/index.php?act=admin-auth-submit [L,QSA]
+
 
 RewriteCond %{REQUEST_URI} ui/dashboard$
 RewriteRule ui/dashboard  ui/index.php?act=dashboard [L,QSA]

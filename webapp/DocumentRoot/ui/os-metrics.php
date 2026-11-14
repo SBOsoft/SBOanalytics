@@ -101,7 +101,7 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                                         <td class="text-end pe-3">{{ row.loadAverage1}}</td>
                                         <td class="text-end pe-3">{{ row.loadAverage5}}</td>
                                         <td class="text-end pe-3">{{ row.loadAverage15}}</td>
-                                        <td class="text-end pe-3">{{ row.hostUptimeMinutes}}</td>
+                                        <td class="text-end pe-3" v-bind:title="row.hostUptimeMinutes + ' minutes'">{{ formatMinutes(row.hostUptimeMinutes) }}</td>
                                         <td class="text-end pe-3">{{ row.loggedInUsers}}</td>
                                     </tr>
                                 </tbody>
@@ -116,7 +116,7 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                 </div>
                 
                 <div class="col-md-6 col-lg-6">                    
-                    <sbo-linechart ref="memoryUsagesChart"  target-element-id="memoryUsagesChart" title="Memory and swap use" y-axis-name="Bytes" series-name="Load average"></sbo-linechart>                    
+                    <sbo-linechart ref="memoryUsagesChart"  target-element-id="memoryUsagesChart" title="Memory and swap use" y-axis-name="Bytes" series-name="Memory" value-format="bytes"></sbo-linechart>                    
                     <div class="my-2" v-if="memoryUsagesDataForTable && memoryUsagesDataForTable.length>0">                        
                         <button class="btn btn-outline-secondary btn-sm d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#memoryUsagesDataTable" aria-expanded="false" aria-controls="memoryUsagesDataTable" title="Show chart data in tabular format">
                             Chart data
@@ -137,11 +137,11 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                                 <tbody>
                                     <tr v-for="(row) in memoryUsagesDataForTable">
                                         <td class="text-end pe-3">{{ row.label}}</td>
-                                        <td class="text-end pe-3">{{ row.memoryUsed}}</td>
-                                        <td class="text-end pe-3">{{ row.memoryFree}}</td>
-                                        <td class="text-end pe-3">{{ row.memoryAvailable}}</td>
-                                        <td class="text-end pe-3">{{ row.swapUsed}}</td>
-                                        <td class="text-end pe-3">{{ row.cacheUsed}}</td>
+                                        <td class="text-end pe-3" v-bind:title="row.memoryUsed + ' bytes'">{{ formatBytes(row.memoryUsed) }}</td>
+                                        <td class="text-end pe-3" v-bind:title="row.memoryFree + ' bytes'">{{ formatBytes(row.memoryFree) }}</td>
+                                        <td class="text-end pe-3" v-bind:title="row.memoryAvailable + ' bytes'">{{ formatBytes(row.memoryAvailable) }}</td>
+                                        <td class="text-end pe-3" v-bind:title="row.swapUsed + ' bytes'">{{ formatBytes(row.swapUsed) }}</td>
+                                        <td class="text-end pe-3" v-bind:title="row.cacheUsed + ' bytes'">{{ formatBytes(row.cacheUsed) }}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -169,6 +169,8 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                 return {                    
                     allHosts:{},
                     hostId: 0,
+                    //true when the page was opened with filters in the URL, charts load automatically then
+                    autoLoad: false,
                     error: 'Select host and period and click Show Metrics to start',
                     twStartStr:'<?php 
                         $yesterday = strtotime("-1 day");
@@ -185,43 +187,95 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
             mounted() {
             },            
             beforeMount() {
+                this.applyUrlState();
                 this.loadAllHosts();
             },
-            
+
             // Methods for the component
             methods: {
+                //filters from the URL (bookmarked/shared/refreshed page), see SBO_ReadUrlState
+                applyUrlState(){
+                    const state = SBO_ReadUrlState({
+                        hostId: SBO_IsPositiveIntString,
+                        twStart: SBO_IsDateTimeLocalString,
+                        twEnd: SBO_IsDateTimeLocalString,
+                        groupBy: SBO_IsGroupByString
+                    });
+                    if(state.hostId){
+                        this.hostId = parseInt(state.hostId);
+                        this.autoLoad = true;
+                    }
+                    if(state.twStart){
+                        this.twStartStr = state.twStart;
+                    }
+                    if(state.twEnd){
+                        this.twEndStr = state.twEnd;
+                    }
+                    if(state.groupBy !== undefined){
+                        this.groupBy = state.groupBy;
+                    }
+                },
                 loadCharts(){
+                    if(!this.hostId){
+                        this.error = 'Select a host first';
+                        return;
+                    }
                     this.error = '';
+                    SBO_WriteUrlState({
+                        hostId: this.hostId,
+                        twStart: this.twStartStr,
+                        twEnd: this.twEndStr,
+                        groupBy: this.groupBy
+                    });
                     this.loadDataForCharts();
                 },
                 loadAllHosts(){
                     var self = this;
-                    window.fetch('../api/hosts').then((response)=>{
-                        response.json().then((parsedJson)=>{
-                            self.allHosts = {};
-                            for(let i in parsedJson){
-                                self.allHosts[parsedJson[i].hostId] = parsedJson[i];
-                            }
-                        });
+                    SBO_FetchList('../api/hosts', 'hostId').then((hosts)=>{
+                        self.allHosts = hosts;
+                        const hostIds = Object.keys(hosts);
+                        if(hostIds.length === 0){
+                            self.error = 'No hosts found. Add a host on the settings page first.';
+                            return;
+                        }
+                        //keep the host from the URL when it exists, otherwise preselect the first one
+                        if(!hosts[self.hostId]){
+                            self.hostId = parseInt(hostIds[0]);
+                            self.autoLoad = false;
+                        }
+                        if(self.autoLoad){
+                            self.loadCharts();
+                        }
+                    }).catch((err)=>{
+                        self.error = 'Could not load hosts: ' + err.message;
                     });
                 },
-                chartClicked(chartType, chartId, clickParams){
-                    switch(chartId){
-                        case 'totalRequestsBarChart':
-                            let totalReqsLogsLink = SBO_GetLogsLink(this.domainId, clickParams.data.timeWindow, this.groupBy, this.allDomains[this.domainId].timeWindowSizeMinutes, 1, '');
-                            window.open(totalReqsLogsLink, '_blank');
-                            break;
-                        
-                        case 'statusCodesPieChart':
-                            this.$refs.statusCodesDetailedMetrics.initParams(this.domainId, 3, clickParams.name, this.twStart, this.twEnd, 20, 'Status code:' + clickParams.name, this.allDomains);
-                            this.$refs.statusCodesDetailedMetrics.goToPage(1, this.groupBy);
-                            break;
-                        
-                            
-                    }
+                formatBytes(value){
+                    return SBO_FormatBytes(value);
                 },
-                
-                               
+                formatMinutes(value){
+                    return SBO_FormatMinutes(value);
+                },
+                /*
+                 Chart/table label of an os-metrics row: raw rows have metricTS, grouped rows have
+                 day+hour, day, or year+month (hour and month can be 0/small numbers, don't test truthiness).
+                 */
+                rowLabel(row){
+                    if(row.metricTS){
+                        return row.metricTS;
+                    }
+                    const pad2 = (n)=>String(n).padStart(2, '0');
+                    if(row.hour !== undefined && row.hour !== null){
+                        return row.day + ' ' + pad2(row.hour) + ':00';
+                    }
+                    if(row.day){
+                        return row.day;
+                    }
+                    if(row.month !== undefined && row.month !== null){
+                        return row.year + '-' + pad2(row.month);
+                    }
+                    return '';
+                },
                 loadDataForCharts(){
                     var self = this;
                     this.hasMoreData = false;
@@ -251,20 +305,8 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                             if(!parsedJson.data[rowIndex]){
                                 continue;
                             }
-                            let labelValue = parsedJson.data[rowIndex].metricTS;
-                            if(!labelValue){
-                                if (parsedJson.data[rowIndex].month){
-                                    labelValue = parsedJson.data[rowIndex].year + ' ' + parsedJson.data[rowIndex].month;
-                                }
-                                if (parsedJson.data[rowIndex].hour){
-                                    labelValue = parsedJson.data[rowIndex].day + ' ' + parsedJson.data[rowIndex].hour;
-                                }
-                                else {
-                                    if (parsedJson.data[rowIndex].day){
-                                        labelValue = parsedJson.data[rowIndex].day;
-                                    }
-                                }
-                            }
+                            let labelValue = self.rowLabel(parsedJson.data[rowIndex]);
+                            //same day as the previous row: show only the time part
                             let splitLabel = labelValue.split(' ');
                             if(splitLabel[0]!==prevLabelPrefix){
                                 prevLabelPrefix = splitLabel[0];

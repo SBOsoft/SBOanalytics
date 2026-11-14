@@ -23,30 +23,33 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
 }
 
 if(($_SESSION['adminSecretVerified'] ?? '') !== 'yes'){
-    $showAdminSecretForm = true;
-    if(!empty($_POST['adminSecret'])){
-        SBO_CheckBruteForceLockout(false, 'adminSecret');
-        $secretFromEnv = getenv('SBO_ADMIN_SECRET');
-        if(!empty($secretFromEnv) && hash_equals($secretFromEnv, $_POST['adminSecret'])){
-            SBO_ClearFailedAuthAttempts('adminSecret');
-            session_regenerate_id(true);
-            $_SESSION['adminSecretVerified'] = 'yes';
-            $_SESSION['adminCSRFToken'] = bin2hex(random_bytes(20));
-            $showAdminSecretForm = false;
-        }
-        else{
-            SBO_RegisterFailedAuthAttempt('adminSecret');
-        }
-    }
-    if($showAdminSecretForm){
+    //the secret is verified by admin-auth-submit.php (before any output), which redirects back here
+    $adminSecretConfigured = !empty(getenv('SBO_ADMIN_SECRET'));
+    $adminLockedOut = ($_SESSION['adminSecretLockedUntil'] ?? 0) > time();
+    $adminError = $_GET['adminError'] ?? '';
 ?>
 <div class="container d-flex justify-content-center align-items-center">
     <div class="pt-4">
-        <form class="mb-4 pb-4" action="settings" method="post">        
-            <h1 class="h3 mb-3 fw-normal text-center">Please sign in</h1>    
-                <div class="alert alert-warning">
-                    Enter admin secret to access this page
-                </div>
+<?php if(!$adminSecretConfigured){ ?>
+        <div class="alert alert-warning">
+            Administration is disabled because <code>SBO_ADMIN_SECRET</code> is not configured on the server.
+        </div>
+<?php } else { ?>
+        <form class="mb-4 pb-4" action="admin-auth-submit" method="post">
+            <h1 class="h3 mb-3 fw-normal text-center">Please sign in</h1>
+<?php if($adminLockedOut){ ?>
+            <div class="alert alert-danger">
+                Too many failed attempts. Please try again later.
+            </div>
+<?php } else if($adminError === 'invalid'){ ?>
+            <div class="alert alert-danger">
+                Invalid admin secret
+            </div>
+<?php } else { ?>
+            <div class="alert alert-warning">
+                Enter admin secret to access this page
+            </div>
+<?php } ?>
             <div class="form-floating my-2">
                 <input name="adminSecret" type="password" class="form-control" id="floatingPassword" placeholder="Admin secret">
                 <label for="floatingPassword">Admin secret</label>
@@ -55,14 +58,15 @@ if(($_SESSION['adminSecretVerified'] ?? '') !== 'yes'){
                 <button class="btn btn-primary w-100 py-2" type="submit">Sign in</button>
             </div>
         </form>
+<?php } ?>
     </div>
 </div>
 <?php
-        return; 
-    }   //if($showAdminSecretForm)
+    return;
 }   //if !adminSecretVerified
 ?>
-    <div id="app" class="p-2">        
+    <div id="app" class="p-2">
+        <div v-if="loadError" class="alert alert-danger">{{ loadError }}</div>
         <div class="row">
             <div class="col-md-6 p-2">
                 <div class="d-flex justify-content-between align-items-center px-1">
@@ -83,7 +87,7 @@ if(($_SESSION['adminSecretVerified'] ?? '') !== 'yes'){
                             Metrics window size: {{ row.timeWindowSizeMinutes }}
                         </div>                        
                     </div>
-                    <div v-if="!allDomains || allDomains.length<1">
+                    <div v-if="domainsLoaded && Object.keys(allDomains).length===0" class="list-group-item text-secondary">
                         No domains found
                     </div>
                 </div>
@@ -105,9 +109,9 @@ if(($_SESSION['adminSecretVerified'] ?? '') !== 'yes'){
                             {{ row.description }}
                         </div>
                     </div>
-                </div>
-                <div v-if="!allDomains || allDomains.length<1">
-                    No domains found
+                    <div v-if="hostsLoaded && Object.keys(allHosts).length===0" class="list-group-item text-secondary">
+                        No hosts found
+                    </div>
                 </div>
             </div>
         </div>
@@ -159,7 +163,7 @@ if(($_SESSION['adminSecretVerified'] ?? '') !== 'yes'){
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" v-on:click="closeEditDomainModal">Close</button>
-                        <button type="button" class="btn btn-primary" v-on:click="saveDomain">Save changes</button>
+                        <button type="button" class="btn btn-primary" v-on:click="saveDomain" v-bind:disabled="savingDomain">Save changes</button>
                     </div>
                 </div>
             </div>
@@ -201,7 +205,7 @@ if(($_SESSION['adminSecretVerified'] ?? '') !== 'yes'){
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" v-on:click="closeEditHostModal">Close</button>
-                        <button type="button" class="btn btn-primary" v-on:click="saveHost">Save changes</button>
+                        <button type="button" class="btn btn-primary" v-on:click="saveHost" v-bind:disabled="savingHost">Save changes</button>
                     </div>
                 </div>
             </div>
@@ -230,15 +234,16 @@ if(($_SESSION['adminSecretVerified'] ?? '') !== 'yes'){
             data() {
                 return {        
                     csrfToken: <?php echo json_encode($_SESSION['adminCSRFToken'] ?? '');?>,
+                    loadError: '',
                     allHosts:{},
-                    moreHosts:false,
-                    dataLimit:50,
-                    hostsPage:1,
+                    hostsLoaded:false,
                     currentEditedHost:{},
+                    editHostError: '',
+                    savingHost:false,
                     allDomains:{},
-                    moreDomains:false,
-                    domainsPage: 1,
+                    domainsLoaded:false,
                     editDomainError: '',
+                    savingDomain:false,
                     currentEditedDomain:{domainId:0, domainName:'', description:'', timeWindowSizeMinutes:10}
                 };
             },
@@ -254,26 +259,20 @@ if(($_SESSION['adminSecretVerified'] ?? '') !== 'yes'){
                 
                 loadAllHosts(){
                     var self = this;
-                    window.fetch('../api/hosts').then((response)=>{
-                        response.json().then((parsedJson)=>{
-                            self.allHosts = {};
-                            self.moreHosts = parsedJson.hasMoreResults;
-                            for(let i in parsedJson){
-                                self.allHosts[parsedJson[i].hostId] = parsedJson[i];
-                            }
-                        });
+                    SBO_FetchList('../api/hosts', 'hostId').then((hosts)=>{
+                        self.allHosts = hosts;
+                        self.hostsLoaded = true;
+                    }).catch((err)=>{
+                        self.loadError = 'Could not load hosts: ' + err.message;
                     });
                 },
                 loadAllDomains(){
                     var self = this;
-                    window.fetch('../api/domains').then((response)=>{
-                        response.json().then((parsedJson)=>{
-                            self.allDomains = {};
-                            self.moreDomains = parsedJson.hasMoreResults;
-                            for(let i in parsedJson){
-                                self.allDomains[parsedJson[i].domainId] = parsedJson[i];
-                            }
-                        });
+                    SBO_FetchList('../api/domains', 'domainId').then((domains)=>{
+                        self.allDomains = domains;
+                        self.domainsLoaded = true;
+                    }).catch((err)=>{
+                        self.loadError = 'Could not load domains: ' + err.message;
                     });
                 },
                 closeEditDomainModal(){
@@ -301,20 +300,18 @@ if(($_SESSION['adminSecretVerified'] ?? '') !== 'yes'){
                     var self = this;
                     var form = document.getElementById('editDomainForm');
                     const formData = new FormData(form);
-                    const response = fetch('../api/admin-domain-save', {
+                    this.savingDomain = true;
+                    this.editDomainError = '';
+                    SBO_FetchJson('../api/admin-domain-save', {
                         method: 'POST',
-                        body: formData,
-                        //headers: {'Content-Type': 'application/x-www-form-urlencoded'}
-                    }).then(response=>{
-                       if (response.ok) {
-                           self.closeEditDomainModal();
-                           self.loadAllDomains();
-                       }
-                       else{
-                           response.json().then(body=>{
-                               self.editDomainError = body.error + ': ' + body.description;
-                           });
-                       }
+                        body: formData
+                    }).then(()=>{
+                        self.closeEditDomainModal();
+                        self.loadAllDomains();
+                    }).catch((err)=>{
+                        self.editDomainError = err.message;
+                    }).finally(()=>{
+                        self.savingDomain = false;
                     });
                 },
                 closeEditHostModal(){
@@ -342,26 +339,22 @@ if(($_SESSION['adminSecretVerified'] ?? '') !== 'yes'){
                     var self = this;
                     var form = document.getElementById('editHostForm');
                     const formData = new FormData(form);
-                    const response = fetch('../api/admin-host-save', {
+                    this.savingHost = true;
+                    this.editHostError = '';
+                    SBO_FetchJson('../api/admin-host-save', {
                         method: 'POST',
-                        body: formData,
-                        //headers: {'Content-Type': 'application/x-www-form-urlencoded'}
-                    }).then(response=>{
-                       if (response.ok) {
-                           self.closeEditHostModal();
-                           self.loadAllHosts();
-                       }
-                       else{
-                           response.json().then(body=>{
-                               self.editHostError = body.error + ': ' + body.description;
-                           });
-                       }
+                        body: formData
+                    }).then(()=>{
+                        self.closeEditHostModal();
+                        self.loadAllHosts();
+                    }).catch((err)=>{
+                        self.editHostError = err.message;
+                    }).finally(()=>{
+                        self.savingHost = false;
                     });
                 }
             }
         });
-
-        app.component('sbo-linechart', SBOLineChart);
 
         app.mount('#app');
     </script>

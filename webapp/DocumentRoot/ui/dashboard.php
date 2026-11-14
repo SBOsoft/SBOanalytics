@@ -79,7 +79,7 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                     <div v-if="truncatedCharts.totalRequestsBarChart" class="small text-warning-emphasis mt-1">Showing only the first 1000 points. Choose a shorter period or a coarser grouping.</div>
                 </div>
                 <div class="col-md-6 col-lg-6">
-                    <sbo-barchart ref="bytesSentBarChart" bar-color="#0a9396" hover-color="#219ebc" target-element-id="bytesSentBarChart" title="Bytes sent" y-axis-name="Bytes" series-name="Bytes sent"></sbo-barchart>
+                    <sbo-barchart ref="bytesSentBarChart" bar-color="#0a9396" hover-color="#219ebc" target-element-id="bytesSentBarChart" title="Bytes sent" y-axis-name="Bytes" series-name="Bytes sent" value-format="bytes"></sbo-barchart>
                     <div v-if="truncatedCharts.bytesSentBarChart" class="small text-warning-emphasis mt-1">Showing only the first 1000 points. Choose a shorter period or a coarser grouping.</div>
                 </div>
             </div>
@@ -151,6 +151,8 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                 return {                    
                     allDomains:{},
                     domainId: 0,
+                    //true when the page was opened with filters in the URL, charts load automatically then
+                    autoLoad: false,
                     error: 'Select domain and period and click Show Metrics to start',
                     twStartStr:'<?php 
                         $yesterday = strtotime("-1 day");
@@ -166,9 +168,10 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
             mounted() {
             },            
             beforeMount() {
+                this.applyUrlState();
                 this.loadAllDomains();
             },
-            computed:{                
+            computed:{
                 //YYYYMMDDHHMM, e.g. 202505230000
                 twStart(){
                     return this.twStartStr.replace(/[^0-9]+/g, '');
@@ -179,10 +182,42 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
             },
             // Methods for the component
             methods: {
+                //filters from the URL (bookmarked/shared/refreshed page), see SBO_ReadUrlState
+                applyUrlState(){
+                    const state = SBO_ReadUrlState({
+                        domainId: SBO_IsPositiveIntString,
+                        twStart: SBO_IsDateTimeLocalString,
+                        twEnd: SBO_IsDateTimeLocalString,
+                        groupBy: SBO_IsGroupByString
+                    });
+                    if(state.domainId){
+                        this.domainId = parseInt(state.domainId);
+                        this.autoLoad = true;
+                    }
+                    if(state.twStart){
+                        this.twStartStr = state.twStart;
+                    }
+                    if(state.twEnd){
+                        this.twEndStr = state.twEnd;
+                    }
+                    if(state.groupBy !== undefined){
+                        this.groupBy = state.groupBy;
+                    }
+                },
                 loadCharts(){
+                    if(!this.domainId){
+                        this.error = 'Select a domain first';
+                        return;
+                    }
                     this.error = '';
                     this.loadedCharts = {};
                     this.truncatedCharts = {};
+                    SBO_WriteUrlState({
+                        domainId: this.domainId,
+                        twStart: this.twStartStr,
+                        twEnd: this.twEndStr,
+                        groupBy: this.groupBy
+                    });
                     this.loadTotalRequestsData();
                     this.loadBytesSentData();
                     this.loadRequestsByStatusCodesData();
@@ -201,13 +236,23 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                 },
                 loadAllDomains(){
                     var self = this;
-                    window.fetch('../api/domains').then((response)=>{
-                        response.json().then((parsedJson)=>{
-                            self.allDomains = {};
-                            for(let i in parsedJson){
-                                self.allDomains[parsedJson[i].domainId] = parsedJson[i];
-                            }
-                        });
+                    SBO_FetchList('../api/domains', 'domainId').then((domains)=>{
+                        self.allDomains = domains;
+                        const domainIds = Object.keys(domains);
+                        if(domainIds.length === 0){
+                            self.error = 'No domains found. Domains are created by SBOLogProcessor or on the settings page.';
+                            return;
+                        }
+                        //keep the domain from the URL when it exists, otherwise preselect the first one
+                        if(!domains[self.domainId]){
+                            self.domainId = parseInt(domainIds[0]);
+                            self.autoLoad = false;
+                        }
+                        if(self.autoLoad){
+                            self.loadCharts();
+                        }
+                    }).catch((err)=>{
+                        self.error = 'Could not load domains: ' + err.message;
                     });
                 },
                 chartClicked(chartType, chartId, clickParams){

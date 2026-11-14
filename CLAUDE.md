@@ -24,6 +24,9 @@ JSON API from the same codebase.
 - **Apache** + `mod_rewrite` for clean URLs (`.htaccess`), `mod_ssl` in the container image.
 - **Frontend**: Vue 3 (global/CDN build, not SFCs), ECharts, Bootstrap 5 — all loaded from
   `cdnjs.cloudflare.com` via `<script>`/`<link>` tags in [webapp/DocumentRoot/ui/index.php](webapp/DocumentRoot/ui/index.php).
+  Scripts are loaded per page (`$loadVue`/`$loadECharts` in `ui/index.php`): ECharts only on
+  pages with charts (dashboard, os-metrics), Vue + `charts.js` on every page except the login form.
+  `charts.js` must therefore not use `echarts` or `Vue` at load time, only inside functions.
   There is **no npm/package.json, no bundler, no transpilation step**. Vue components are
   plain JS objects defined in [webapp/DocumentRoot/ui/charts.js](webapp/DocumentRoot/ui/charts.js)
   and registered globally.
@@ -42,6 +45,7 @@ webapp/DocumentRoot/        # Apache DocumentRoot — this whole tree is web-ser
   ui/
     index.php               # UI dispatcher/layout: reads ?act=, requires auth, includes page partials
     auth-form.php, auth-submit.php, dashboard.php, log-viewer.php, os-metrics.php, settings.php
+    admin-auth-submit.php    # verifies the admin secret posted from settings, redirects back (no HTML)
     charts.js                # all Vue components (charts, log/metrics table views) + shared JS helpers
 db/
   db-for-new-installations.sql   # consolidated schema for fresh installs
@@ -61,6 +65,9 @@ containers/                # docker-compose dev environment (NOT for production 
    - `include`s `common.php`, starts the session,
    - calls `SBO_CheckIsAuthenticated(...)` (skipped only for `auth-form`/`auth-submit`),
    - `switch`es on `$_REQUEST['act']` and `include`s the matching partial/action file.
+   - In `ui/index.php`, form handlers that send headers or redirects (`auth-submit`,
+     `admin-auth-submit`) are included and `return` **before** any HTML is written; page
+     partials are included after the layout's `<head>`/nav, so they must not call `header()`.
 3. Every partial/action file (in `ui/` and `api/actions/`) starts with:
    ```php
    if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
@@ -169,8 +176,16 @@ warns this setup is **not for production use**.
   `ref="chartElem"` on the chart container and implement `buildOption(chartData)`. The mixin
   handles init, resize (ResizeObserver), disposal, `showChart()` and `showError()` — don't
   call `echarts.init` or `setOption` directly in components.
-- Fetch API JSON with `SBO_FetchJson(url)` and handle failures in its `.catch()` (it rejects
-  on non-2xx and non-JSON responses, using the API's `error`/`description` as the message).
+- Fetch API JSON with `SBO_FetchJson(url, fetchOptions)` (also for POSTs) and handle failures in
+  its `.catch()` (it rejects on non-2xx and non-JSON responses, using the API's
+  `error`/`description` as the message). Load the domain/host lists with
+  `SBO_FetchList('../api/domains', 'domainId')`. Never call bare `fetch()` without error handling.
+- Page filters live in the URL query string (`SBO_ReadUrlState` with validators /
+  `SBO_WriteUrlState`), so views can be bookmarked and survive a refresh.
+- Byte/minute values: `SBO_FormatBytes`/`SBO_FormatMinutes`; charts take `value-format="bytes"`.
+  Values such as referers, paths and user agents are attacker-controlled: if you ever write an
+  ECharts tooltip/label **function** formatter that returns HTML, escape them (string-template
+  formatters and `valueFormatter` are escaped by ECharts).
 - Time window values (`tw`, like `202505230729`) are server wall-clock times; convert them with
   `SBO_TimeWindowToDate`/`SBO_FormatDateAsTS`, which work in UTC so browser time zone/DST
   never shifts them. Don't mix in local-time `Date` getters/setters.

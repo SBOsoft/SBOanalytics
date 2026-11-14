@@ -49,8 +49,9 @@ const sboChartBgColors =
  For non-2xx responses the error message comes from the api's error JSON
  ({"error":"...","description":"..."}, see SBO_API_Error_Response) when present.
  */
-function SBO_FetchJson(url){
-    return window.fetch(url).then((response)=>{
+//options are passed to fetch(), e.g. {method:'POST', body: formData}
+function SBO_FetchJson(url, options){
+    return window.fetch(url, options).then((response)=>{
         if(!response.ok){
             return response.text().then((body)=>{
                 const httpStatus = 'HTTP ' + response.status + (response.statusText ? ' ' + response.statusText : '');
@@ -71,6 +72,109 @@ function SBO_FetchJson(url){
             throw new Error('Unexpected response from server, your session may have expired. Reload the page.');
         });
     });
+}
+
+/*
+ Loads a list endpoint that returns a JSON array (e.g. ../api/domains, ../api/hosts) and
+ resolves to an object keyed by row[idField].
+ */
+function SBO_FetchList(url, idField){
+    return SBO_FetchJson(url).then((rows)=>{
+        const byId = {};
+        for(const row of (Array.isArray(rows) ? rows : [])){
+            if(row){
+                byId[row[idField]] = row;
+            }
+        }
+        return byId;
+    });
+}
+
+/*
+ Page filter state in the URL query string, so a view can be bookmarked, shared and survives
+ a refresh. SBO_ReadUrlState returns only the parameters that are present and pass their
+ validator: validators is {paramName: function(value) -> boolean}.
+ */
+function SBO_ReadUrlState(validators){
+    const params = new URLSearchParams(window.location.search);
+    const state = {};
+    for(const name in validators){
+        if(params.has(name) && validators[name](params.get(name))){
+            state[name] = params.get(name);
+        }
+    }
+    return state;
+}
+
+/*
+ Replaces the current URL's query string with state ({paramName: value}) without reloading
+ the page or adding a history entry.
+ */
+function SBO_WriteUrlState(state){
+    const params = new URLSearchParams();
+    for(const name in state){
+        params.set(name, state[name] ?? '');
+    }
+    window.history.replaceState(null, '', window.location.pathname + '?' + params.toString());
+}
+
+//validators for SBO_ReadUrlState
+function SBO_IsPositiveIntString(value){
+    return /^[1-9][0-9]*$/.test(value);
+}
+function SBO_IsDateTimeLocalString(value){
+    //format used by <input type="datetime-local">
+    return /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}$/.test(value);
+}
+function SBO_IsGroupByString(value){
+    return ['', 'hour', 'day', 'month'].includes(value);
+}
+
+/*
+ Formats a byte count as B, KB, MB, GB... (1024 based), e.g. 1536 -> '1.50 KB'.
+ Non-numeric values are returned unchanged.
+ */
+function SBO_FormatBytes(value){
+    const n = Number(value);
+    if(value === null || value === '' || !isFinite(n)){
+        return value;
+    }
+    const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+    let v = Math.abs(n);
+    let i = 0;
+    while(v >= 1024 && i < units.length - 1){
+        v /= 1024;
+        i++;
+    }
+    const num = i === 0 ? String(Math.round(v)) : v.toFixed(v < 10 ? 2 : 1);
+    return (n < 0 ? '-' : '') + num + ' ' + units[i];
+}
+
+/*
+ Formats a number of minutes as days, hours and minutes, e.g. 1505 -> '1d 1h 5m'.
+ Non-numeric values are returned unchanged.
+ */
+function SBO_FormatMinutes(value){
+    const n = Math.floor(Number(value));
+    if(value === null || value === '' || !isFinite(n)){
+        return value;
+    }
+    const d = Math.floor(n / 1440);
+    const h = Math.floor((n % 1440) / 60);
+    const m = n % 60;
+    return (d ? d + 'd ' : '') + ((d || h) ? h + 'h ' : '') + m + 'm';
+}
+
+/*
+ Returns the value formatter function for a chart's valueFormat prop ('bytes'), or null.
+ */
+function SBO_GetValueFormatter(valueFormat){
+    switch(valueFormat){
+        case 'bytes':
+            return SBO_FormatBytes;
+        default:
+            return null;
+    }
 }
 
 function SBO_ShowElem(elemId){
@@ -330,7 +434,9 @@ const SBOBarChart  = {
         seriesName: String,
         barColor: String,
         hoverColor: String,
-        vertical: Boolean
+        vertical: Boolean,
+        //'bytes' formats axis and tooltip values as KB/MB/GB, empty: plain numbers
+        valueFormat: String
     },
     methods: {
         buildOption(chartDataParam){
@@ -367,6 +473,18 @@ const SBOBarChart  = {
                     formatter: '{value}'
                 }
             };
+            const tooltip = {
+                trigger: 'item'
+            };
+            const valueFormatter = SBO_GetValueFormatter(this.valueFormat);
+            if(valueFormatter){
+                valueAxis.axisLabel.formatter = (value)=>valueFormatter(value);
+                //string templates can't format values: use the default tooltip (escapes names) + valueFormatter
+                tooltip.valueFormatter = (value)=>valueFormatter(value);
+            }
+            else{
+                tooltip.formatter = this.vertical ? '{b}: {c}' : '{b}<br/>{a}: {c}';
+            }
 
             return {
                 title: {
@@ -377,10 +495,7 @@ const SBOBarChart  = {
                         fontWeight: 'bold'
                     }
                 },
-                tooltip: {
-                    trigger: 'item',
-                    formatter: this.vertical ? '{b}: {c}' : '{b}<br/>{a}: {c}'
-                },
+                tooltip: tooltip,
                 grid: {
                     left: '3%',
                     right: '4%',
@@ -701,7 +816,9 @@ const SBOLineChart  = {
         lineColor: String,
         hoverColor: String,
         noBorder: Boolean,
-        hideLegends: Boolean
+        hideLegends: Boolean,
+        //'bytes' formats axis and tooltip values as KB/MB/GB, empty: plain numbers
+        valueFormat: String
     },
     methods: {
         /*
@@ -760,6 +877,16 @@ const SBOLineChart  = {
                     }
                 }
             };
+            const valueFormatter = SBO_GetValueFormatter(this.valueFormat);
+            if(valueFormatter){
+                option.yAxis.axisLabel.formatter = (value)=>valueFormatter(value);
+                option.yAxis.axisPointer = {
+                    label: {
+                        formatter: (params)=>valueFormatter(params.value)
+                    }
+                };
+                option.tooltip.valueFormatter = (value)=>valueFormatter(value);
+            }
             if(Array.isArray(chartData.values)){
                 option.series = [
                     {

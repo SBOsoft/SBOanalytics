@@ -142,13 +142,10 @@ echo SBO_JsonEncode($defaultTwEndValue);
             },
             loadAllDomains() {
                 var self = this;
-                window.fetch('../api/domains').then((response) => {
-                    response.json().then((parsedJson) => {
-                        self.allDomains = {};
-                        for (let i in parsedJson) {
-                            self.allDomains[parsedJson[i].domainId] = parsedJson[i];
-                        }
-                    });
+                SBO_FetchList('../api/domains', 'domainId').then((domains) => {
+                    self.allDomains = domains;
+                }).catch((err) => {
+                    self.error = 'Could not load domains: ' + err.message;
                 });
             },
 

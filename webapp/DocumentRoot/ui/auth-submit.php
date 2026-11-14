@@ -30,13 +30,14 @@ $password = ($_POST['password'] ?? null);
 
 switch(SBO_AUTH_TYPE){
     case 'single':
-        //don't allow empty username or password
-        if(!empty($username) && !empty($password) && hash_equals((string)SBO_AUTH_SINGLE_USER, $username) && hash_equals((string)SBO_AUTH_SINGLE_PWD, $password)){
+        //don't allow empty username or password. is_string: array inputs (username[]=...) must not reach hash_equals
+        if(is_string($username) && is_string($password) && $username !== '' && $password !== ''
+                && hash_equals((string)SBO_AUTH_SINGLE_USER, $username) && hash_equals((string)SBO_AUTH_SINGLE_PWD, $password)){
             SBO_ClearFailedAuthAttempts('auth');
             session_regenerate_id(true);
             $_SESSION['authOK'] = true;
             $_SESSION['authenticatedUsername'] = $username;
-            header('Location: dashboard?authOk=1');
+            header('Location: dashboard');
             return;
         }
         break;
