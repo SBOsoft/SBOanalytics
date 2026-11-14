@@ -87,6 +87,9 @@ switch($action){
         .sbo-status400 td{
             color:var(--bs-secondary) !important;
         }
+        .sbo-status500 td{
+            color:var(--bs-danger) !important;
+        }
     </style>
 </head>
 <body>

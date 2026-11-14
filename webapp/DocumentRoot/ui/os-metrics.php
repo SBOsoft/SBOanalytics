@@ -174,7 +174,7 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                         $yesterday = strtotime("-1 day");
                         echo date('Y-m-d', $yesterday).'T00:00';
                     ?>',
-                    twEndStr:'<?php echo date('Y-m-d').'T'.date('h:i');?>',
+                    twEndStr:'<?php echo date('Y-m-d').'T'.date('H:i');?>',
                     groupBy:'hour',
                     hasMoreData:false,
                     dataLimit:100,
@@ -232,101 +232,101 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                             '&twEnd=' + encodeURIComponent(this.twEndStr.replace(/T/, ' ')) + 
                             '&groupBy=' + encodeURIComponent(this.groupBy) + 
                             '&limit=' + encodeURIComponent(this.dataLimit);
-                    window.fetch(url).then((response)=>{                        
-                        response.json().then((parsedJson)=>{
-                            self.hasMoreData = parsedJson.hasMoreResults;
-                            let loadAveragesChartData = {
-                                '1 minute load average':[],
-                                '5 minute load average': [],
-                                '15 minute load average': []
-                            };
-                            let memoryUsagesChartData = {
-                                'SWAP used':[],
-                                'Cache used':[],
-                                'Memory used':[],
-                                'Free memory':[],
-                                'Available memory':[]
-                            };
-                            let prevLabelPrefix = '';
-                            for(let rowIndex in parsedJson.data){
-                                if(!parsedJson.data[rowIndex]){
-                                    continue;
-                                }
-                                let labelValue = parsedJson.data[rowIndex].metricTS;
-                                if(!labelValue){
-                                    if (parsedJson.data[rowIndex].month){
-                                        labelValue = parsedJson.data[rowIndex].year + ' ' + parsedJson.data[rowIndex].month;
-                                    }
-                                    if (parsedJson.data[rowIndex].hour){
-                                        labelValue = parsedJson.data[rowIndex].day + ' ' + parsedJson.data[rowIndex].hour;
-                                    }
-                                    else {
-                                        if (parsedJson.data[rowIndex].day){
-                                            labelValue = parsedJson.data[rowIndex].day;
-                                        }
-                                    }
-                                }
-                                let splitLabel = labelValue.split(' ');
-                                if(splitLabel[0]!==prevLabelPrefix){
-                                    prevLabelPrefix = splitLabel[0];
-                                }
-                                else{
-                                    labelValue = splitLabel[1];
-                                }
-                                loadAveragesChartData['1 minute load average'].push({
-                                    value:parsedJson.data[rowIndex].loadAverage1,
-                                    name:labelValue
-                                });
-                                loadAveragesChartData['5 minute load average'].push({
-                                    value:parsedJson.data[rowIndex].loadAverage5,
-                                    name:labelValue
-                                });
-                                loadAveragesChartData['15 minute load average'].push({
-                                    value:parsedJson.data[rowIndex].loadAverage15,
-                                    name:labelValue
-                                });
-                                self.loadAveragesDataForTable.push({
-                                    label:labelValue,
-                                    loadAverage1:parsedJson.data[rowIndex].loadAverage1,
-                                    loadAverage5: parsedJson.data[rowIndex].loadAverage5,
-                                    loadAverage15: parsedJson.data[rowIndex].loadAverage15,
-                                    hostUptimeMinutes:parsedJson.data[rowIndex].hostUptimeMinutes,
-                                    loggedInUsers:parsedJson.data[rowIndex].loggedInUsers
-                                });
-                                memoryUsagesChartData['SWAP used'].push({
-                                    value:parsedJson.data[rowIndex].swapUsed,
-                                    name:labelValue
-                                });
-                                memoryUsagesChartData['Cache used'].push({
-                                    value:parsedJson.data[rowIndex].cacheUsed,
-                                    name:labelValue
-                                });
-                                memoryUsagesChartData['Memory used'].push({
-                                    value:parsedJson.data[rowIndex].memoryUsed,
-                                    name:labelValue
-                                });
-                                memoryUsagesChartData['Free memory'].push({
-                                    value:parsedJson.data[rowIndex].memoryFree,
-                                    name:labelValue
-                                });
-                                memoryUsagesChartData['Available memory'].push({
-                                    value:parsedJson.data[rowIndex].memoryAvailable,
-                                    name:labelValue
-                                });
-                                
-                                self.memoryUsagesDataForTable.push({
-                                    label:labelValue,
-                                    swapUsed: parsedJson.data[rowIndex].swapUsed,
-                                    cacheUsed: parsedJson.data[rowIndex].cacheUsed,
-                                    memoryUsed: parsedJson.data[rowIndex].memoryUsed,
-                                    memoryAvailable: parsedJson.data[rowIndex].memoryAvailable,
-                                    memoryFree: parsedJson.data[rowIndex].memoryFree
-                                });
+                    SBO_FetchJson(url).then((parsedJson)=>{
+                        self.hasMoreData = parsedJson.hasMoreResults;
+                        let loadAveragesChartData = {
+                            '1 minute load average':[],
+                            '5 minute load average': [],
+                            '15 minute load average': []
+                        };
+                        let memoryUsagesChartData = {
+                            'SWAP used':[],
+                            'Cache used':[],
+                            'Memory used':[],
+                            'Free memory':[],
+                            'Available memory':[]
+                        };
+                        let prevLabelPrefix = '';
+                        for(let rowIndex in parsedJson.data){
+                            if(!parsedJson.data[rowIndex]){
+                                continue;
                             }
-                            self.$refs['loadAveragesChart'].showChart(loadAveragesChartData);
-                            self.$refs['memoryUsagesChart'].showChart(memoryUsagesChartData);                            
-                        });
-
+                            let labelValue = parsedJson.data[rowIndex].metricTS;
+                            if(!labelValue){
+                                if (parsedJson.data[rowIndex].month){
+                                    labelValue = parsedJson.data[rowIndex].year + ' ' + parsedJson.data[rowIndex].month;
+                                }
+                                if (parsedJson.data[rowIndex].hour){
+                                    labelValue = parsedJson.data[rowIndex].day + ' ' + parsedJson.data[rowIndex].hour;
+                                }
+                                else {
+                                    if (parsedJson.data[rowIndex].day){
+                                        labelValue = parsedJson.data[rowIndex].day;
+                                    }
+                                }
+                            }
+                            let splitLabel = labelValue.split(' ');
+                            if(splitLabel[0]!==prevLabelPrefix){
+                                prevLabelPrefix = splitLabel[0];
+                            }
+                            else{
+                                labelValue = splitLabel[1];
+                            }
+                            loadAveragesChartData['1 minute load average'].push({
+                                value:parsedJson.data[rowIndex].loadAverage1,
+                                name:labelValue
+                            });
+                            loadAveragesChartData['5 minute load average'].push({
+                                value:parsedJson.data[rowIndex].loadAverage5,
+                                name:labelValue
+                            });
+                            loadAveragesChartData['15 minute load average'].push({
+                                value:parsedJson.data[rowIndex].loadAverage15,
+                                name:labelValue
+                            });
+                            self.loadAveragesDataForTable.push({
+                                label:labelValue,
+                                loadAverage1:parsedJson.data[rowIndex].loadAverage1,
+                                loadAverage5: parsedJson.data[rowIndex].loadAverage5,
+                                loadAverage15: parsedJson.data[rowIndex].loadAverage15,
+                                hostUptimeMinutes:parsedJson.data[rowIndex].hostUptimeMinutes,
+                                loggedInUsers:parsedJson.data[rowIndex].loggedInUsers
+                            });
+                            memoryUsagesChartData['SWAP used'].push({
+                                value:parsedJson.data[rowIndex].swapUsed,
+                                name:labelValue
+                            });
+                            memoryUsagesChartData['Cache used'].push({
+                                value:parsedJson.data[rowIndex].cacheUsed,
+                                name:labelValue
+                            });
+                            memoryUsagesChartData['Memory used'].push({
+                                value:parsedJson.data[rowIndex].memoryUsed,
+                                name:labelValue
+                            });
+                            memoryUsagesChartData['Free memory'].push({
+                                value:parsedJson.data[rowIndex].memoryFree,
+                                name:labelValue
+                            });
+                            memoryUsagesChartData['Available memory'].push({
+                                value:parsedJson.data[rowIndex].memoryAvailable,
+                                name:labelValue
+                            });
+                            
+                            self.memoryUsagesDataForTable.push({
+                                label:labelValue,
+                                swapUsed: parsedJson.data[rowIndex].swapUsed,
+                                cacheUsed: parsedJson.data[rowIndex].cacheUsed,
+                                memoryUsed: parsedJson.data[rowIndex].memoryUsed,
+                                memoryAvailable: parsedJson.data[rowIndex].memoryAvailable,
+                                memoryFree: parsedJson.data[rowIndex].memoryFree
+                            });
+                        }
+                        self.$refs['loadAveragesChart'].showChart(loadAveragesChartData);
+                        self.$refs['memoryUsagesChart'].showChart(memoryUsagesChartData);
+                    }).catch((err)=>{
+                        self.$refs['loadAveragesChart'].showError(err.message);
+                        self.$refs['memoryUsagesChart'].showError(err.message);
                     });
                 },
             }

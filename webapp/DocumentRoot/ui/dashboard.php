@@ -154,7 +154,7 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                         $yesterday = strtotime("-1 day");
                         echo date('Y-m-d', $yesterday).'T00:00';
                     ?>',
-                    twEndStr:'<?php echo date('Y-m-d').'T'.date('h:i');?>',
+                    twEndStr:'<?php echo date('Y-m-d').'T'.date('H:i');?>',
                     groupBy:'day',
                     loadedCharts: {}
                 };
@@ -229,7 +229,7 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                             break;
                         /*
                         case 'pathsPieChart':                            
-                            this.$refs.pathsDetailedMetrics.initParams(this.domainId, 7, clickParams.name, this.twStart, this.twEnd, 20, 'Path:' + clickParams.name);
+                            this.$refs.pathsDetailedMetrics.initParams(this.domainId, 7, clickParams.name, this.twStart, this.twEnd, 20, 'Path:' + clickParams.name, this.allDomains);
                             this.$refs.pathsDetailedMetrics.goToPage(1, this.groupBy);
                             break;
                         */
@@ -275,25 +275,26 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                             '&twStart=' + encodeURIComponent(this.twStart) + 
                             '&twEnd=' + encodeURIComponent(this.twEnd) + 
                             '&groupBy=' + encodeURIComponent(this.groupBy);
-                    window.fetch(url).then((response)=>{                        
-                        response.json().then((parsedJson)=>{
-                            let chartData = [];
-                            for(let rowIndex in parsedJson.data){
-                                if(!parsedJson.data[rowIndex]){
-                                    continue;
-                                }
-                                chartData.push({
-                                    value:parseInt(parsedJson.data[rowIndex].metric),
-                                    name:SBO_FormatTimeWindow(parsedJson.data[rowIndex].tw, parsedJson.data, rowIndex),
-                                    timeWindow: parsedJson.data[rowIndex].tw
-                                });
-                            }                            
-                            self.$refs[chartId].showChart(chartData);
-                            self.$refs[chartId].chartObj.on('click', (clickParams)=>{
-                                self.chartClicked('bar', chartId, clickParams);
+                    SBO_FetchJson(url).then((parsedJson)=>{
+                        let chartData = [];
+                        for(let rowIndex in parsedJson.data){
+                            if(!parsedJson.data[rowIndex]){
+                                continue;
+                            }
+                            chartData.push({
+                                value:parseInt(parsedJson.data[rowIndex].metric),
+                                name:SBO_FormatTimeWindow(parsedJson.data[rowIndex].tw, parsedJson.data, rowIndex),
+                                timeWindow: parsedJson.data[rowIndex].tw
                             });
+                        }                            
+                        self.$refs[chartId].showChart(chartData);
+                        //remove the handler added by a previous load, otherwise one click fires once per load
+                        self.$refs[chartId].chartObj.off('click');
+                        self.$refs[chartId].chartObj.on('click', (clickParams)=>{
+                            self.chartClicked('bar', chartId, clickParams);
                         });
-
+                    }).catch((err)=>{
+                        self.$refs[chartId].showError(err.message);
                     });
                 },
                 loadRequestsByHttpMethodsData(){
@@ -333,27 +334,28 @@ if(!defined('SBO_FILE_INCLUDED_PROPERLY')){
                     if(limit){
                         url+='&limit='+encodeURIComponent(limit);
                     }
-                    window.fetch(url).then((response)=>{                        
-                        response.json().then((parsedJson)=>{
-                            let chartData = {
-                                legends:[],
-                                values:[]
-                            };
-                            for(let row of parsedJson.data){
-                                if(!row){
-                                    continue;
-                                }
-                                chartData.values.push({value:row.metric, name:row.keyValue});
-                                chartData.legends.push(row.keyValue);
-                            }                        
-                            self.$refs[chartId].showChart(chartData);
-                            self.$refs[chartId].chartObj.on('click', (clickParams)=>{
-                                self.chartClicked('pie', chartId, clickParams);
-                            });
-                            self.loadedCharts[chartId] = true;
+                    SBO_FetchJson(url).then((parsedJson)=>{
+                        let chartData = {
+                            legends:[],
+                            values:[]
+                        };
+                        for(let row of parsedJson.data){
+                            if(!row){
+                                continue;
+                            }
+                            chartData.values.push({value:row.metric, name:row.keyValue});
+                            chartData.legends.push(row.keyValue);
+                        }                        
+                        self.$refs[chartId].showChart(chartData);
+                        //remove the handler added by a previous load, otherwise one click fires once per load
+                        self.$refs[chartId].chartObj.off('click');
+                        self.$refs[chartId].chartObj.on('click', (clickParams)=>{
+                            self.chartClicked('pie', chartId, clickParams);
                         });
-                        
-                    });                    
+                        self.loadedCharts[chartId] = true;
+                    }).catch((err)=>{
+                        self.$refs[chartId].showError(err.message);
+                    });
                 },
             }
         });

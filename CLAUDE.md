@@ -141,8 +141,18 @@ warns this setup is **not for production use**.
   `SBO_CheckAdminCSRF()` before touching the database, matching
   `admin-domain-save.php`/`admin-host-save.php`.
 - Frontend JS has no module system — everything is a global (`SBOBarChart`, `SBOPieChart`,
-  `SBOLineChart`, `SBODetailedMetricsView`, `SBOLogsView`, plus free functions prefixed
-  `SBO_`). Keep new components/functions in `charts.js` following the same naming.
+  `SBOLineChart`, `SBODetailedMetricsView`, `SBOLogsView`, `SBOChartMixin`, plus free
+  functions prefixed `SBO_`). Keep new components/functions in `charts.js` following the
+  same naming.
+- ECharts components use `mixins: [SBOChartMixin]`: declare a `targetElementId` prop, put
+  `ref="chartElem"` on the chart container and implement `buildOption(chartData)`. The mixin
+  handles init, resize (ResizeObserver), disposal, `showChart()` and `showError()` — don't
+  call `echarts.init` or `setOption` directly in components.
+- Fetch API JSON with `SBO_FetchJson(url)` and handle failures in its `.catch()` (it rejects
+  on non-2xx and non-JSON responses, using the API's `error`/`description` as the message).
+- Time window values (`tw`, like `202505230729`) are server wall-clock times; convert them with
+  `SBO_TimeWindowToDate`/`SBO_FormatDateAsTS`, which work in UTC so browser time zone/DST
+  never shifts them. Don't mix in local-time `Date` getters/setters.
 
 ## Review artifacts
 
